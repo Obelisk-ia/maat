@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#cec7bf">
+  <title>Sin conexión · Maat</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; margin: 0; padding: 24px; background: #cec7bf; color: #1f1e1c; font: 16px/1.5 system-ui, sans-serif; }
+    main { display: grid; justify-items: center; gap: 14px; width: 100%; max-width: 380px; padding: 32px 24px; border-radius: 22px; background: #f7f3ea; text-align: center; }
+    svg { width: 56px; height: 56px; border-radius: 16px; }
+    h1 { margin: 0; font-size: 24px; letter-spacing: -0.02em; }
+    p { margin: 0; color: #4f4a43; }
+    a { display: inline-grid; place-items: center; min-height: 48px; padding: 0 28px; border-radius: 99px; background: #2b3f56; color: #fff; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <svg viewBox="0 0 512 512" aria-hidden="true">
+      <rect width="512" height="512" fill="#2B3F56"/>
+      <g fill="#F8F7F4" transform="translate(91 97) scale(13)">
+        <path d="M13.9 19.2V10C13.9 7.2 12.6 5.3 10.3 4.7C9.2 4.5 8.2 4.9 7.6 5.9C7.8 3.4 9.7 1.8 12.1 1.8C15.8 1.8 17.8 5 17.8 9.2L15.6 10.6L17.7 10.8C17.5 11.7 17.3 12.6 17 13.4L15 14.7L16.6 14.6C15.9 16.3 15 17.8 13.9 19.2Z"/><path d="M12.2 18.6C10.1 15.3 8.9 11.9 8.9 8.8C8.9 7.9 8.7 7.2 8.3 6.7C10.9 6.4 12.2 8.1 12.2 11Z"/><rect x="12.45" y="14" width="1.2" height="8.7" rx="0.6"/>
+      </g>
+    </svg>
+    <h1>Sin conexión</h1>
+    <p>Maat necesita internet para mostrar tus tarjetas. Si estás en caja, dile tu celular al equipo para registrar tu visita.</p>
+    <a href="">Reintentar</a>
+  </main>
+  <script>addEventListener("online", () => location.reload());</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+/* The kiosk: find the card on the left, check it and stamp it on the right. */
+.station-frame { width: 100%; container-type: inline-size; }
+/* minmax(0, …) lets the columns shrink; inputs have a built-in width that would otherwise stretch them. */
+.station { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; width: 100%; max-width: 460px; }
+@container (min-width: 760px) {
+  .station { grid-template-columns: minmax(0, 440px) minmax(0, 420px); justify-content: space-between; align-items: start; max-width: 940px; gap: 36px; }
+}
+
+/* Finder panel, in the same warm surfaces and navy as the rest of the app. */
+.station-finder {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 18px;
+  border: 1px solid rgb(31 30 28 / 12%); border-radius: 22px; background: var(--card);
+  box-shadow: 0 12px 24px rgb(38 24 15 / 10%);
+}
+.station-viewfinder {
+  position: relative; display: grid; justify-items: center; gap: 6px; padding: 28px 22px;
+  border-radius: 16px; background: var(--secondary); text-align: center;
+}
+/* Corner marks that read as a camera frame. */
+.station-viewfinder::before {
+  content: ""; position: absolute; inset: 12px; pointer-events: none;
+  --corner: linear-gradient(var(--primary), var(--primary));
+  background:
+    var(--corner) left top / 22px 3px, var(--corner) left top / 3px 22px,
+    var(--corner) right top / 22px 3px, var(--corner) right top / 3px 22px,
+    var(--corner) left bottom / 22px 3px, var(--corner) left bottom / 3px 22px,
+    var(--corner) right bottom / 22px 3px, var(--corner) right bottom / 3px 22px;
+  background-repeat: no-repeat;
+}
+.station-viewfinder > svg { width: 28px; height: 28px; color: var(--primary); }
+.station-viewfinder strong { font-size: 16px; }
+.station-viewfinder > span { max-width: 28ch; color: var(--muted-foreground); font-size: 13px; line-height: 1.5; }
+/* Positioned so it stays tappable above the corner marks. */
+.station-scan {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; max-width: 100%; margin-top: 10px; padding: 0 20px; border: 0; border-radius: 99px;
+  background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.station-scan:hover { background: #1e2e41; }
+.station-scan svg { width: 18px; height: 18px; flex: none; }
+
+.station-divider { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--muted-foreground); font-size: 13px; font-weight: 600; }
+.station-divider::before, .station-divider::after { content: ""; flex: 1; height: 1px; background: rgb(31 30 28 / 14%); }
+.station-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.station-search > div { display: flex; gap: 8px; }
+.station-finder .station-search > div > button { flex: none; min-height: 44px; background: var(--secondary); }
+.station-finder .phone-input, .station-finder .station-code { background: #fdfbf7; }
+.station-finder input::placeholder { color: #6f6a61; }
+.station-code { min-width: 0; height: 44px; font-family: var(--font-mono); font-size: 16px; letter-spacing: 0.1em; }
+
+/* Result */
+.station-result { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; scroll-margin-block: 90px 16px; }
+/* The live region stays in the page so screen readers hear it; empty, it takes no room. */
+.station-result > div:empty { margin-bottom: -12px; }
+.station-empty { margin: 0; padding: 36px 20px; border: 1px dashed var(--border); border-radius: 18px; color: #4f4a43; font-size: 14px; text-align: center; }
+.station-note { margin: 0; color: #4f4a43; font-size: 13px; line-height: 1.5; }
+.station-target { display: grid; gap: 10px; }
+.station-customer { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; }
+.station-customer strong { font-size: 18px; overflow-wrap: anywhere; }
+.station-customer span { font: 13px var(--font-mono); letter-spacing: 0.06em; }
+.station-added { display: flex; align-items: center; gap: 6px; margin: 0; color: #285143; font-size: 14px; font-weight: 700; }
+.station-added svg { width: 16px; height: 16px; }
+.station-error { margin: 0; color: var(--destructive); font-size: 14px; font-weight: 700; }
+
+/* The prize waiting to be handed over stands out from the stamping controls. */
+.station-prize {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 16px;
+  border: 1px solid rgb(166 110 36 / 45%); border-radius: 16px; background: #f4e7cf;
+}
+.station-prize > svg { width: 24px; height: 24px; margin-top: 2px; color: #7a4d10; }
+.station-prize > div { display: grid; gap: 2px; min-width: 0; }
+.station-prize > div strong { font-size: 18px; overflow-wrap: anywhere; }
+.station-prize > div span { color: #5c390d; font-size: 13px; font-weight: 600; }
+.station-prize > p { grid-column: 1 / -1; margin: 0; color: #4f4a43; font-size: 13px; line-height: 1.5; }
+.station-prize > button { grid-column: 1 / -1; white-space: normal; }
+/* The confirmation renders in the dialog portal. */
+.station-confirm p { margin: 0; font-size: 14px; line-height: 1.5; }
+.station-confirm h2 { padding-inline: 24px; overflow-wrap: anywhere; text-wrap: balance; }
+.station-history h2 { margin: 4px 0; font-size: 13px; font-weight: 800; }
+.station-history ul { margin: 0; padding: 0; list-style: none; }
+.station-history li { display: grid; padding-block: 8px; border-top: 1px solid rgb(31 30 28 / 12%); font-size: 13px; }
+.station-history li strong { overflow-wrap: anywhere; }
+.station-history li span { color: #4f4a43; }
+
+/* On the narrowest phones the search buttons keep only their icon; their labels stay for screen readers. */
+@container (max-width: 330px) {
+  .station-finder { padding: 12px; }
+  .station-finder .station-search > div > button { width: 44px; padding: 0; font-size: 0; }
+}

@@ -1,0 +1,28 @@
+/* The type selector and attribute outrank the button resets some screens apply to their own buttons. */
+button.install-app[type="button"] {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 40px; padding: 0 14px;
+  border: 0; border-radius: 99px; background: var(--primary); color: var(--primary-foreground);
+  font: inherit; font-size: 13px; font-weight: 700; line-height: 1.2; white-space: nowrap; cursor: pointer;
+}
+button.install-app[type="button"]:hover { background: #1e2e41; }
+button.install-app:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+button.install-app > svg { width: 16px; height: 16px; flex: none; }
+.install-app-short { display: none; }
+@media (max-width: 374px) {
+  button.install-app[type="button"] { padding: 0 11px; }
+  .install-app-long { display: none; }
+  .install-app-short { display: inline; }
+}
+
+/* The steps render in the dialog portal. */
+.install-dialog ol { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.install-dialog li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 15px; line-height: 1.55; counter-increment: step; }
+.install-dialog li::before { content: counter(step); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: 13px; font-weight: 800; }
+.install-dialog li > span { padding-top: 2px; }
+.install-dialog li svg { display: inline; width: 16px; height: 16px; vertical-align: -2px; }
+.install-copy { display: grid; gap: 8px; }
+.install-copy button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border: 0; border-radius: 99px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.install-copy svg { width: 17px; height: 17px; }
+.install-copy p { margin: 0; font-size: 13px; }
+.install-copy p span { display: block; overflow-wrap: anywhere; font-family: var(--font-mono); user-select: all; }
+.install-note { margin: 0; padding-top: 12px; border-top: 1px solid rgb(31 30 28 / 12%); color: #4f4a43; font-size: 13px; line-height: 1.5; }

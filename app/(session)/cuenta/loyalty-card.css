@@ -1,0 +1,140 @@
+/* The loyalty card as the owner designed it. Shared by every screen that shows one. */
+.business-card-logo { display: grid; align-items: center; justify-items: center; flex: none; overflow: hidden; border-radius: 10px; }
+.business-card-logo img { width: 100%; height: 100%; padding: 3px; object-fit: contain; }
+.business-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  box-shadow: 0 12px 24px rgb(38 24 15 / 14%);
+}
+
+.business-card-image { z-index: 0; object-fit: cover; object-position: center; }
+.business-card[data-image="true"]::before {
+  position: absolute; z-index: 1; inset: 0;
+  background: var(--card-bg); opacity: var(--card-tint);
+  content: "";
+}
+.business-card-content { position: relative; z-index: 2; display: grid; gap: 14px; }
+.business-card-header { display: flex; justify-content: space-between; gap: 10px; }
+.business-card-identity { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.business-card-logo {
+  width: 36px; height: 36px;
+  background: color-mix(in srgb, var(--card-ink) 18%, transparent);
+  color: var(--card-accent);
+}
+.business-card-logo:has(img) { background: #fff; }
+.business-card-logo svg { width: 18px; height: 18px; }
+.business-card-header strong { display: block; overflow-wrap: anywhere; font-size: 16px; line-height: 1.25; }
+.business-card-header span { display: block; margin-top: 3px; overflow-wrap: anywhere; font-size: 11px; }
+.business-card-count { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+.business-card-count span { margin: 0 0 3px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+.business-card-stamps {
+  --stamp-gap: 7px;
+  display: grid;
+  gap: 9px;
+}
+.business-card-stamp-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--stamp-gap);
+}
+/* A stamp is an empty slot with a face on top; the face is what animates when it is earned. */
+.business-card-stamp {
+  position: relative;
+  flex: 0 0 min(72px, calc((100% - (var(--stamp-columns) - 1) * var(--stamp-gap)) / var(--stamp-columns)));
+  display: block;
+  aspect-ratio: 1;
+  border: 1px dashed color-mix(in srgb, var(--card-accent) 70%, transparent);
+  border-radius: 50%;
+  background: var(--card-stamp-fill);
+  color: var(--card-accent);
+}
+.business-card-stamp[data-playing="true"] { z-index: 2; }
+.stamp-face, .stamp-body, .stamp-mark { position: absolute; inset: 0; }
+/* Overlaps the slot's 1px border so the earned stamp covers it. */
+.stamp-face { inset: -1px; }
+.stamp-body { overflow: hidden; border-radius: 50%; }
+.stamp-mark { display: grid; place-items: center; }
+.stamp-mark svg { width: 32%; height: 32%; }
+.stamp-mark img { width: 68%; height: 68%; border-radius: 22%; object-fit: contain; }
+.business-card-stamp[data-filled="true"] { border-color: transparent; color: var(--stamped-color); }
+.business-card-stamp[data-filled="true"] .stamp-body {
+  border: 1px solid var(--stamped-color);
+  background: var(--stamped-fill);
+  box-shadow: inset 0 0 0 1px var(--stamped-color);
+}
+/* While animating, keep the empty slot visible underneath. */
+.business-card-stamp[data-playing="true"] { border-color: color-mix(in srgb, var(--card-accent) 70%, transparent); }
+/* Reward stamps swap the two colors once earned. */
+.business-card-stamp[data-goal="true"][data-filled="true"] { color: var(--stamped-fill); }
+.business-card-stamp[data-goal="true"][data-filled="true"] .stamp-body { background: var(--stamped-color); }
+
+.stamp-shine { position: absolute; top: -10%; bottom: -10%; left: 0; width: 36%; opacity: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 75%), transparent); }
+.stamp-fx { position: absolute; z-index: 1; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px);
+  overflow: visible; pointer-events: none; }
+.stamp-ring { fill: none; stroke: var(--stamped-color); stroke-width: 5; opacity: 0; }
+.stamp-drop, .stamp-spark { fill: var(--stamped-color); opacity: 0; }
+
+.business-card-stamp small {
+  position: absolute;
+  z-index: 2;
+  bottom: -5px;
+  left: 50%;
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  place-items: center;
+  padding-inline: 3px;
+  border: 1px solid var(--card-accent);
+  border-radius: 99px;
+  color: var(--card-accent);
+  background: var(--card-bg);
+  font: 9px var(--font-mono);
+  transform: translateX(-50%);
+}
+
+.business-card-prize-list { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.business-card-prize-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 3px 7px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-ink) 18%, transparent);
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  font-weight: 700;
+}
+.business-card-prize-list li > span:first-child { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.business-card-prize-list li svg { width: 9px; height: 9px; }
+.business-card-prize-list li[data-state="ready"] { background: var(--card-ink); color: var(--card-bg); }
+.business-card-prize-list li[data-state="redeemed"] { opacity: 0.72; }
+.business-card-prize-list li[data-state="redeemed"] > span:nth-child(2) { text-decoration: line-through; }
+
+.business-card-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  gap: 8px;
+  margin: 0;
+  padding-top: 11px;
+  border-top: 1px solid color-mix(in srgb, var(--card-accent) 45%, transparent);
+}
+.business-card-summary div:last-child { text-align: right; }
+.business-card-summary dt { font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; }
+.business-card-summary dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 800; }
+
+.business-card-qr { display: grid; justify-items: center; gap: 6px; margin: 2px 0 0; }
+.business-card-qr svg { display: block; padding: 2px; border-radius: 11px; background: white; }
+.business-card-qr figcaption { font: 11px var(--font-mono); letter-spacing: 0.08em; }
+
+/* The QR can be tapped where it opens full screen. */
+.business-card-qr button { display: block; padding: 0; border: 0; border-radius: 11px; background: none; cursor: pointer; }
+.business-card-qr button:focus-visible { outline: 2px solid var(--card-ink); outline-offset: 3px; }

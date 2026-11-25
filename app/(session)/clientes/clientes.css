@@ -1,0 +1,138 @@
+.client-entry {
+  overflow-x: clip;
+}
+
+.client-entry .maat-relief img {
+  width: min(1140px, 130vw);
+  opacity: 0.42;
+}
+
+.client-entry-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-areas: "brand" "art" "access";
+  gap: 20px;
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  padding: 20px clamp(18px, 4vw, 40px) 32px;
+}
+
+.client-entry-header {
+  grid-area: brand;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.client-entry-actions { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: flex-end; gap: 8px 14px; }
+
+.client-access {
+  grid-area: access;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+}
+
+.client-entry-title {
+  margin: 0 0 20px;
+  font-size: clamp(30px, 6vw, 46px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.client-entry .tab-bar { margin-bottom: 20px; }
+.client-entry .field-input { min-height: 48px; font-size: 16px; }
+.client-entry .btn-submit { min-height: 48px; }
+
+.client-card-fan {
+  grid-area: art;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  padding-block: 22px;
+}
+
+/* The scanned business's card, in place of the sample fan. */
+.client-card-scanned {
+  grid-area: art;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 420px);
+}
+
+.client-card {
+  grid-area: 1 / 1;
+  container-type: inline-size;
+  display: grid;
+  align-content: space-between;
+  width: min(70%, 365px);
+  aspect-ratio: 1.586;
+  padding: clamp(12px, 3vw, 25px);
+  border-radius: clamp(12px, 3vw, 22px);
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  transform: translate(var(--card-x), var(--card-y)) rotate(var(--card-angle));
+  box-shadow: 0 14px 30px -14px rgb(30 23 16 / 0.55);
+}
+
+.client-card--bakery {
+  --card-bg: #b4531f;
+  --card-text: #fff6eb;
+  --card-stamp: #ffd48c;
+  --card-x: -17%;
+  --card-y: 8%;
+  --card-angle: -9deg;
+  --card-delay: 0ms;
+}
+
+.client-card--coffee {
+  --card-bg: #1f4b3c;
+  --card-text: #f4eedf;
+  --card-stamp: #d9b46a;
+  --card-x: 17%;
+  --card-y: 4%;
+  --card-angle: 7deg;
+  --card-delay: 60ms;
+}
+
+.client-card--tacos {
+  --card-bg: #c1271f;
+  --card-text: #fff;
+  --card-stamp: #f7c548;
+  --card-x: 0%;
+  --card-y: -6%;
+  --card-angle: -1.5deg;
+  --card-delay: 120ms;
+}
+
+.client-card-heading { display: flex; justify-content: space-between; gap: 6px; }
+.client-card-heading > :last-child { text-align: right; }
+.client-card-heading strong { display: block; font-size: clamp(12px, 7.3cqi, 24px); line-height: 1.15; }
+.client-card-heading span { display: block; font-size: clamp(10px, 4.5cqi, 13px); opacity: 0.85; }
+.client-card-stamps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3cqi; width: min(100%, 83cqi); }
+.client-card-stamps span { aspect-ratio: 1; border: 1px dashed currentColor; border-radius: 50%; }
+.client-card-stamps .is-filled { background: var(--card-stamp); border-color: var(--card-stamp); }
+
+@media (min-width: 950px) {
+  .client-entry-grid {
+    align-content: center;
+    min-height: 100dvh;
+    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+    grid-template-areas: "brand art" "access art";
+    column-gap: clamp(40px, 7vw, 100px);
+    row-gap: 32px;
+    padding-block: 32px 44px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .client-card { animation: client-card-enter 440ms var(--ease-out) var(--card-delay) both; }
+  @keyframes client-card-enter {
+    from { opacity: 0; transform: translate(var(--card-x), calc(var(--card-y) + 24px)); }
+  }
+}
