@@ -33,7 +33,7 @@ export function Dashboard({ onEditCard }: { onEditCard: () => void }) {
   const today = useToday();
   const [tab, setTab] = useState<Tab>("overview");
   const [period, setPeriod] = useState<DashboardPeriod>("30d");
-  const data = useQuery(api.dashboard.overview, isAuthenticated ? { period, today } : "skip");
+  const data = useQuery(api.owners.dashboard.overview, isAuthenticated ? { period, today } : "skip");
   // While another period loads, the previous numbers stay in place, dimmed.
   const [lastData, setLastData] = useState(data);
   if (data && data !== lastData) setLastData(data);

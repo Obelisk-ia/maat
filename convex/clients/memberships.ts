@@ -1,19 +1,10 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { randomMemberCode } from "../lib/member-code";
-import { mutation, query, type QueryCtx } from "./_generated/server";
-import { countToday } from "./dailyStats";
-import { cardDesign } from "./organizations";
-import { latestRedemptions } from "./stamper";
-
-async function currentClient(ctx: QueryCtx) {
-  const userId = await getAuthUserId(ctx);
-  const user = userId && await ctx.db.get("users", userId);
-  if (!user || user.account.role !== "client") {
-    throw new ConvexError("Entra con una cuenta de cliente para usar tus tarjetas.");
-  }
-  return user;
-}
+import { randomMemberCode } from "../../lib/member-code";
+import { mutation, query } from "../_generated/server";
+import { currentClient } from "./currentClient";
+import { countToday } from "../dailyStats";
+import { cardDesign } from "../organizations";
+import { latestRedemptions } from "../redemptions";
 
 /** The signed-in customer's cards, newest first, each with its business's current design. */
 export const mine = query({

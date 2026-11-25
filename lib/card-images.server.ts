@@ -5,6 +5,7 @@ const dimensions = {
   logo: { width: 512, height: 512 },
   background: { width: 1440, height: 1800 },
   stampLogo: { width: 256, height: 256 },
+  cover: { width: 1440, height: 960 },
 };
 
 export async function compressCardImage(file: File, slot: CardImageSlot): Promise<ArrayBuffer> {

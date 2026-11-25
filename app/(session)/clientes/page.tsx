@@ -27,7 +27,7 @@ const cards = [
 // The art and the form both need the scanned business; one request fetches it once.
 const scannedBusiness = cache(async (organizationId: string) => {
   await connection();
-  return fetchQuery(api.organizations.publicCard, { organizationId });
+  return fetchQuery(api.clients.businesses.publicCard, { organizationId });
 });
 
 export default function ClientsPage(props: PageProps<"/clientes">) {

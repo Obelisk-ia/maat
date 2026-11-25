@@ -15,6 +15,7 @@ import {
   SidebarProvider, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 import { defaultBusinessCard } from "@/lib/business-card";
+import { Campaigns } from "./campaigns/campaigns";
 import { CardStudio } from "./card-studio";
 import { Dashboard } from "./dashboard/dashboard";
 import { QrStudio } from "./qr-studio";
@@ -24,10 +25,10 @@ import { TeamInvite } from "./team-invite";
 import { signOutAccount } from "./sign-out";
 
 type Owner = Extract<NonNullable<FunctionReturnType<typeof api.users.viewer>>, { role: "owner" }>;
-type View = "dashboard" | "kiosco" | "tarjeta" | "qr" | "equipo" | "ajustes";
+type View = "dashboard" | "kiosco" | "tarjeta" | "qr" | "avisos" | "equipo" | "ajustes";
 
 const viewTitles: Record<View, string> = {
-  dashboard: "Dashboard", kiosco: "Kiosco", tarjeta: "Tarjeta de lealtad", qr: "Código QR", equipo: "Equipo", ajustes: "Ajustes",
+  dashboard: "Dashboard", kiosco: "Kiosco", tarjeta: "Tarjeta de lealtad", qr: "Código QR", avisos: "Campañas push", equipo: "Equipo", ajustes: "Ajustes",
 };
 
 const navigation = [
@@ -35,7 +36,7 @@ const navigation = [
   { label: "Kiosco", icon: ScanLine, view: "kiosco" },
   { label: "Tarjeta de lealtad", icon: CreditCard, view: "tarjeta" },
   { label: "Código QR", icon: QrCode, view: "qr" },
-  { label: "Campañas push", icon: Bell },
+  { label: "Campañas push", icon: Bell, view: "avisos" },
   { label: "Equipo", icon: Users, view: "equipo" },
   { label: "Ajustes", icon: Settings, view: "ajustes" },
 ] satisfies { label: string; icon: typeof Bell; view?: View }[];
@@ -117,6 +118,7 @@ export function OwnerWorkspace({ user }: { user: Owner }) {
         <div className="owner-content">
           {view === "dashboard" && <Dashboard onEditCard={() => setView("tarjeta")} />}
           {view === "ajustes" && <RewardSettings />}
+          {view === "avisos" && <Campaigns />}
           {/* Unmounted when away, so no customer stays on screen. */}
           {view === "kiosco" && (
             <>
@@ -130,7 +132,7 @@ export function OwnerWorkspace({ user }: { user: Owner }) {
           <div hidden={view !== "tarjeta"}>
             <CardStudio initial={user.card ?? defaultBusinessCard(user.businessName)}
               logoUrl={user.logoUrl} backgroundUrl={user.backgroundUrl}
-              stampLogoUrl={user.stampLogoUrl} hasSavedCard={user.card !== null} />
+              stampLogoUrl={user.stampLogoUrl} coverUrl={user.coverUrl} hasSavedCard={user.card !== null} />
           </div>
           <div hidden={view !== "qr"}>
             <QrStudio organizationId={user.organizationId} cardLogoUrl={user.logoUrl}

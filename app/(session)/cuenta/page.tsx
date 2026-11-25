@@ -31,17 +31,18 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/cuenta">, "sear
   const token = await convexAuthNextjsToken();
   // The installed app is mostly the customers'. Every account can sign in from their page.
   const signedOutPath = businessId ? joinPath(businessId)
-    : params.app !== undefined ? "/clientes?tab=login" : "/auth?tab=login";
+    : params.app !== undefined || params.tarjeta !== undefined ? "/clientes?tab=login" : "/auth?tab=login";
   if (!token) redirect(signedOutPath);
 
   const user = await fetchQuery(api.users.viewer, {}, { token });
   if (!user) redirect(signedOutPath);
 
   if (user.role === "client") {
-    const cards = await fetchQuery(api.memberships.mine, {}, { token });
+    const cards = await fetchQuery(api.clients.memberships.mine, {}, { token });
     return (
       <SessionProvider>
-        <Wallet customer={{ name: user.name, email: user.email, phone: user.phone }} initialCards={cards} joinId={businessId} />
+        <Wallet customer={{ name: user.name, email: user.email, phone: user.phone }} initialCards={cards} joinId={businessId}
+          cardId={typeof params.tarjeta === "string" ? params.tarjeta : null} />
       </SessionProvider>
     );
   }

@@ -1,4 +1,5 @@
 import { Check, QrCode } from "lucide-react";
+import { stampWord } from "@/lib/business-card";
 import { cardProgress, missingStamps } from "@/lib/card-progress";
 import { CardLogo } from "./card-logo";
 import { shortDate } from "./dates";
@@ -28,7 +29,7 @@ export function RewardsPage({ cards, onShowQr }: { cards: WalletCard[]; onShowQr
                 <CardLogo card={card} />
                 <div>
                   <strong>{goal.name}</strong>
-                  <span>{card.details.displayName} · A los {goal.stamps} sellos</span>
+                  <span>{card.details.displayName} · Con {goal.stamps} {stampWord(goal.stamps, card.details)}</span>
                 </div>
                 <button type="button" className="wallet-btn" onClick={() => onShowQr(card.membershipId)}
                   aria-label={`Mostrar QR para canjear ${goal.name} en ${card.details.displayName}`}>
@@ -48,7 +49,7 @@ export function RewardsPage({ cards, onShowQr }: { cards: WalletCard[]; onShowQr
                 <CardLogo card={card} />
                 <div>
                   <strong>{next!.name}</strong>
-                  <span>{card.details.displayName} · {missingStamps(next!.stamps - stamps)}</span>
+                  <span>{card.details.displayName} · {missingStamps(next!.stamps - stamps, card.details)}</span>
                 </div>
                 <span className="wallet-mini-bar" aria-hidden="true">
                   <i style={{ transform: `scaleX(${stamps / next!.stamps})`, background: card.details.colors.background }} />

@@ -2,6 +2,7 @@ import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { cardDetails } from "./cardModel";
+import { audience, reminderRule } from "./reminderModel";
 
 export default defineSchema({
   ...authTables,
@@ -26,6 +27,7 @@ export default defineSchema({
       logoId: v.optional(v.id("_storage")),
       backgroundId: v.optional(v.id("_storage")),
       stampLogoId: v.optional(v.id("_storage")),
+      coverId: v.optional(v.id("_storage")),
     })),
     // Kept apart from the card, so saving the design never changes it. Missing means yes.
     restartAfterFinalPrize: v.optional(v.boolean()),
@@ -71,6 +73,68 @@ export default defineSchema({
     restartedCard: v.boolean(),
   })
     .index("by_membership", ["membershipId"])
+    .index("by_organization", ["organizationId"]),
+  // A phone or browser that agreed to receive a customer's notifications.
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    lastTestAt: v.optional(v.number()),
+    // How the push service answered the latest notification.
+    lastResult: v.optional(v.object({ at: v.number(), ok: v.boolean(), status: v.optional(v.number()) })),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+  // Cards whose notifications the customer turned off. A table of its own, like the one above.
+  mutedCards: defineTable({
+    userId: v.id("users"),
+    membershipId: v.id("memberships"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_membership", ["membershipId"]),
+  // A business's automatic reminders.
+  reminderPlans: defineTable({
+    organizationId: v.id("organizations"),
+    sendHour: v.number(),
+    rules: v.array(reminderRule),
+    // The last Mexico City day the reminders went out, so a day is never repeated.
+    lastRunDay: v.optional(v.string()),
+  }).index("by_organization", ["organizationId"]),
+  // One-time messages the owner sends.
+  campaigns: defineTable({
+    organizationId: v.id("organizations"),
+    createdBy: v.id("users"),
+    audience,
+    message: v.string(),
+    scheduledFor: v.number(),
+    day: v.string(),
+    status: v.union(v.literal("scheduled"), v.literal("sending"), v.literal("sent"), v.literal("cancelled")),
+    scheduledId: v.optional(v.id("_scheduled_functions")),
+    // Filled in while it's sent.
+    matched: v.number(),
+    queued: v.number(),
+  }).index("by_organization_and_day", ["organizationId", "day"]),
+  // Every reminder or message sent to a customer's card, and when (_creationTime).
+  notificationLog: defineTable({
+    organizationId: v.id("organizations"),
+    membershipId: v.id("memberships"),
+    day: v.string(),
+    ruleId: v.optional(v.string()),
+    ruleType: v.optional(v.string()),
+    ruleDays: v.optional(v.number()),
+    // The visit the customer had last, so a reminder goes once until they come back.
+    absence: v.optional(v.number()),
+    campaignId: v.optional(v.id("campaigns")),
+    devices: v.number(),
+    failures: v.number(),
+    // Whether a push service took it. Missing while it's on its way.
+    accepted: v.optional(v.boolean()),
+    // Their next visit, if it came within a week.
+    returnedAt: v.optional(v.number()),
+  })
+    .index("by_membership", ["membershipId"])
+    .index("by_campaign", ["campaignId"])
     .index("by_organization", ["organizationId"]),
   // Each business's totals per Mexico City day, for the dashboard.
   dailyStats: defineTable({

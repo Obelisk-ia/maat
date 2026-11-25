@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, Copy, Download, Share, SquarePlus } from "lucide-react";
+import { Download, Share, SquarePlus } from "lucide-react";
 import { useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { CopyLink } from "./copy-link";
 import { installState, promptInstall, subscribeInstall, type InstallState } from "./install-store";
 import "./install-app.css";
 
@@ -41,34 +42,10 @@ const guides: Record<Guide, { description: string; steps: ReactNode[]; note?: st
   },
   "android-inapp": {
     description: "Estás en el navegador de otra app, que no puede instalar Maat.",
-    steps: [<>Copia el enlace.</>, <>Ábrelo en <b>Chrome</b>.</>, <>Ahí toca <b>Instalar</b> o <b>Agregar a inicio</b>.</>],
+    steps: [<>Copia el enlace.</>, <>Ábrelo en el <b>navegador</b> de tu teléfono.</>, <>Ahí toca <b>Instalar</b> o <b>Agregar a inicio</b>.</>],
     copyLink: true,
   },
 };
-
-function CopyLink() {
-  const [status, setStatus] = useState<"copied" | "failed">();
-  const link = `${window.location.origin}/clientes?tab=login`;
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(link);
-      setStatus("copied");
-    } catch {
-      setStatus("failed");
-    }
-  }
-
-  return (
-    <div className="install-copy">
-      <button type="button" onClick={copy}>
-        {status === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-        {status === "copied" ? "Enlace copiado" : "Copiar enlace"}
-      </button>
-      {status === "failed" && <p role="alert">No pudimos copiarlo. Escríbelo así: <span>{link}</span></p>}
-    </div>
-  );
-}
 
 /**
  * Offers to put Maat on the home screen. It renders nothing inside the installed app, or where

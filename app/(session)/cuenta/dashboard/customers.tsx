@@ -17,7 +17,7 @@ const searchable = (text: string) => text.normalize("NFD").replace(/[\p{Diacriti
 
 export function Customers({ today }: { today: string }) {
   const { isAuthenticated } = useConvexAuth();
-  const data = useQuery(api.dashboard.customers, isAuthenticated ? {} : "skip");
+  const data = useQuery(api.owners.dashboard.customers, isAuthenticated ? {} : "skip");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 

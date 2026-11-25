@@ -12,7 +12,7 @@ export async function rotateAccountInvite() {
   const token = await convexAuthNextjsToken();
   if (!token) throw new Error("Missing session");
 
-  await fetchMutation(api.organizations.rotateInviteCode, {}, { token });
+  await fetchMutation(api.owners.settings.rotateInviteCode, {}, { token });
   refresh();
 }
 
@@ -38,7 +38,7 @@ export async function saveAccountCard(details: CardDetails, form: FormData) {
         }
       }
     }
-    await fetchAction(api.businessCards.save, { details, assets }, { token });
+    await fetchAction(api.owners.businessCards.save, { details, assets }, { token });
   } catch (error) {
     return error instanceof ConvexError && typeof error.data === "string"
       ? error.data : "No pudimos guardar la tarjeta. Intenta de nuevo.";

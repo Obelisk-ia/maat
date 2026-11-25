@@ -9,17 +9,29 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as businessCards from "../businessCards.js";
 import type * as cardModel from "../cardModel.js";
+import type * as clients_businesses from "../clients/businesses.js";
+import type * as clients_currentClient from "../clients/currentClient.js";
+import type * as clients_memberships from "../clients/memberships.js";
+import type * as clients_notifications from "../clients/notifications.js";
+import type * as crons from "../crons.js";
 import type * as dailyStats from "../dailyStats.js";
-import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
-import type * as memberships from "../memberships.js";
 import type * as migrations from "../migrations.js";
+import type * as notifications from "../notifications.js";
 import type * as organizations from "../organizations.js";
-import type * as prizes from "../prizes.js";
-import type * as stamper from "../stamper.js";
-import type * as stamps from "../stamps.js";
+import type * as owners_businessCards from "../owners/businessCards.js";
+import type * as owners_campaigns from "../owners/campaigns.js";
+import type * as owners_dashboard from "../owners/dashboard.js";
+import type * as owners_settings from "../owners/settings.js";
+import type * as pushSender from "../pushSender.js";
+import type * as redemptions from "../redemptions.js";
+import type * as reminderModel from "../reminderModel.js";
+import type * as reminderSend from "../reminderSend.js";
+import type * as reminders from "../reminders.js";
+import type * as staff_currentStamper from "../staff/currentStamper.js";
+import type * as staff_prizes from "../staff/prizes.js";
+import type * as staff_stamps from "../staff/stamps.js";
 import type * as users from "../users.js";
 
 import type {
@@ -30,17 +42,29 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  businessCards: typeof businessCards;
   cardModel: typeof cardModel;
+  "clients/businesses": typeof clients_businesses;
+  "clients/currentClient": typeof clients_currentClient;
+  "clients/memberships": typeof clients_memberships;
+  "clients/notifications": typeof clients_notifications;
+  crons: typeof crons;
   dailyStats: typeof dailyStats;
-  dashboard: typeof dashboard;
   http: typeof http;
-  memberships: typeof memberships;
   migrations: typeof migrations;
+  notifications: typeof notifications;
   organizations: typeof organizations;
-  prizes: typeof prizes;
-  stamper: typeof stamper;
-  stamps: typeof stamps;
+  "owners/businessCards": typeof owners_businessCards;
+  "owners/campaigns": typeof owners_campaigns;
+  "owners/dashboard": typeof owners_dashboard;
+  "owners/settings": typeof owners_settings;
+  pushSender: typeof pushSender;
+  redemptions: typeof redemptions;
+  reminderModel: typeof reminderModel;
+  reminderSend: typeof reminderSend;
+  reminders: typeof reminders;
+  "staff/currentStamper": typeof staff_currentStamper;
+  "staff/prizes": typeof staff_prizes;
+  "staff/stamps": typeof staff_stamps;
   users: typeof users;
 }>;
 

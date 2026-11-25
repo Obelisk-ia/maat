@@ -86,6 +86,7 @@ export const viewer = query({
       logoUrl: organization.card?.logoId ? await ctx.storage.getUrl(organization.card.logoId) : null,
       backgroundUrl: organization.card?.backgroundId ? await ctx.storage.getUrl(organization.card.backgroundId) : null,
       stampLogoUrl: organization.card?.stampLogoId ? await ctx.storage.getUrl(organization.card.stampLogoId) : null,
+      coverUrl: organization.card?.coverId ? await ctx.storage.getUrl(organization.card.coverId) : null,
     };
   },
 });

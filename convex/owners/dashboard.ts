@@ -1,11 +1,11 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { cardProgress } from "../lib/card-progress";
-import { addDays, periodRange, sumDays } from "../lib/dashboard-periods";
-import { dayKey } from "../lib/stamp-day";
-import type { Doc } from "./_generated/dataModel";
-import { query, type QueryCtx } from "./_generated/server";
-import { cardOf } from "./organizations";
+import { cardProgress } from "../../lib/card-progress";
+import { addDays, periodRange, sumDays } from "../../lib/dashboard-periods";
+import { dayKey } from "../../lib/stamp-day";
+import type { Doc } from "../_generated/dataModel";
+import { query, type QueryCtx } from "../_generated/server";
+import { cardOf } from "../organizations";
 
 // Most cards read at once. Past this, the dashboard says its customer figures are partial.
 const cardLimit = 5000;

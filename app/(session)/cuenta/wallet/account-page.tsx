@@ -5,13 +5,15 @@ import { useState } from "react";
 import { InstallApp, useInstallState } from "@/components/pwa/install-app";
 import { formatPhone } from "@/lib/registration";
 import { signOutAccount } from "../sign-out";
-import type { Customer } from "./types";
+import { AlertSettings } from "./alerts";
+import type { Customer, WalletCard } from "./types";
+import type { Push } from "./use-push";
 
 export function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0].toUpperCase()).join("");
 }
 
-export function AccountPage({ customer }: { customer: Customer }) {
+export function AccountPage({ customer, cards, push }: { customer: Customer; cards: WalletCard[]; push: Push }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const install = useInstallState();
@@ -20,6 +22,8 @@ export function AccountPage({ customer }: { customer: Customer }) {
     setBusy(true);
     setError("");
     try {
+      // Whoever uses this phone next mustn't get this account's notifications.
+      await push.forgetDevice();
       await signOutAccount("/clientes?tab=login");
     } catch {
       setError("No pudimos cerrar tu sesión. Intenta de nuevo.");
@@ -41,6 +45,7 @@ export function AccountPage({ customer }: { customer: Customer }) {
         <p className="wallet-phone">{formatPhone(customer.phone)}</p>
         <p className="wallet-help">Si no traes tu QR, dile este número al equipo del negocio para registrar tu visita. Para canjear un premio necesitas tu QR o el código de tu tarjeta.</p>
       </section>
+      <AlertSettings push={push} cards={cards} />
       {install !== "none" && (
         <section aria-labelledby="account-app">
           <h2 id="account-app">App Maat</h2>

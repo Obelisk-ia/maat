@@ -1,4 +1,4 @@
-import { maxCardStamps, type CardDetails } from "./business-card";
+import { maxCardStamps, stampWord, type CardDetails } from "./business-card";
 import { prizeId } from "./prizes";
 
 /**
@@ -22,8 +22,9 @@ export function restartsCard(goals: { id: string }[], deliveredId: string, resta
   return restartAfterFinalPrize && goals.at(-1)?.id === deliveredId;
 }
 
-export function missingStamps(count: number) {
-  return count === 1 ? "Te falta 1 sello" : `Te faltan ${count} sellos`;
+export function missingStamps(count: number, card?: Pick<CardDetails, "world">) {
+  const unit = stampWord(count, card);
+  return count === 1 ? `Te falta 1 ${unit}` : `Te faltan ${count} ${unit}`;
 }
 
 /** What comes next, said to the customer or, at the kiosk, about them. */
@@ -32,7 +33,7 @@ export function nextStepText(
 ) {
   const { total, stamps, ready, next } = cardProgress(card, earned, redeemed);
   const forStaff = audience === "staff";
-  const missing = (count: number) => forStaff ? missingStamps(count).replace(/^Te/, "Le") : missingStamps(count);
+  const missing = (count: number) => forStaff ? missingStamps(count, card).replace(/^Te/, "Le") : missingStamps(count, card);
   if (next) return `${missing(next.stamps - stamps)} para ${next.name}`;
   if (stamps >= total) return forStaff ? "Completó su tarjeta" : "Completaste tu tarjeta";
   if (ready.length) return forStaff ? "Tiene un premio listo" : "Tienes un premio listo";

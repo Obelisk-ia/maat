@@ -1,11 +1,13 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { cardImageLimit, cardImageSlots, cardValidationError, type CardImageSlot } from "../lib/business-card";
-import { assignPrizeIds } from "../lib/prizes";
-import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { action, internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
-import { cardDetails } from "./cardModel";
+import {
+  cardImageLimit, cardImageSlots, cardValidationError, sanitizeWorldForSave, type CardImageSlot,
+} from "../../lib/business-card";
+import { assignPrizeIds } from "../../lib/prizes";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import { action, internalMutation, internalQuery, type QueryCtx } from "../_generated/server";
+import { cardDetails } from "../cardModel";
 
 async function ownerOrganization(ctx: QueryCtx, userId: Id<"users">) {
   const user = await ctx.db.get("users", userId);
@@ -30,16 +32,23 @@ export const writeCard = internalMutation({
   args: {
     userId: v.id("users"),
     details: cardDetails,
-    assets: v.object({ logo: storageChange, background: storageChange, stampLogo: storageChange }),
+    assets: v.object({
+      logo: storageChange,
+      background: storageChange,
+      stampLogo: storageChange,
+      cover: storageChange,
+    }),
   },
   handler: async (ctx, { userId, details, assets }) => {
     const organization = await ownerOrganization(ctx, userId);
     const previousLogo = organization.card?.logoId;
     const previousBackground = organization.card?.backgroundId;
     const previousStampLogo = organization.card?.stampLogoId;
+    const previousCover = organization.card?.coverId;
     const logoId = assets.logo === undefined ? previousLogo : assets.logo ?? undefined;
     const backgroundId = assets.background === undefined ? previousBackground : assets.background ?? undefined;
     const stampLogoId = assets.stampLogo === undefined ? previousStampLogo : assets.stampLogo ?? undefined;
+    const coverId = assets.cover === undefined ? previousCover : assets.cover ?? undefined;
 
     // Redeemed prizes are remembered by ID, so every saved prize needs one.
     const rewards = assignPrizeIds(details.rewards, organization.card?.details.rewards ?? []);
@@ -49,11 +58,13 @@ export const writeCard = internalMutation({
         ...(logoId ? { logoId } : {}),
         ...(backgroundId ? { backgroundId } : {}),
         ...(stampLogoId ? { stampLogoId } : {}),
+        ...(coverId ? { coverId } : {}),
       },
     });
     if (previousLogo && previousLogo !== logoId) await ctx.storage.delete(previousLogo);
     if (previousBackground && previousBackground !== backgroundId) await ctx.storage.delete(previousBackground);
     if (previousStampLogo && previousStampLogo !== stampLogoId) await ctx.storage.delete(previousStampLogo);
+    if (previousCover && previousCover !== coverId) await ctx.storage.delete(previousCover);
     return null;
   },
 });
@@ -61,7 +72,12 @@ export const writeCard = internalMutation({
 export const save = action({
   args: {
     details: cardDetails,
-    assets: v.optional(v.object({ logo: imageChange, background: imageChange, stampLogo: imageChange })),
+    assets: v.optional(v.object({
+      logo: imageChange,
+      background: imageChange,
+      stampLogo: imageChange,
+      cover: imageChange,
+    })),
   },
   handler: async (ctx, { details, assets = {} }): Promise<null> => {
     const userId = await getAuthUserId(ctx);
@@ -75,7 +91,7 @@ export const save = action({
       }
     }
 
-    if (cardImageSlots.some((slot) => assets[slot])) await ctx.runQuery(internal.businessCards.assertOwner, { userId });
+    if (cardImageSlots.some((slot) => assets[slot])) await ctx.runQuery(internal.owners.businessCards.assertOwner, { userId });
     const changes: Partial<Record<CardImageSlot, Id<"_storage"> | null>> = {};
     const uploads: Id<"_storage">[] = [];
     try {
@@ -88,14 +104,18 @@ export const save = action({
           changes[slot] = id;
         }
       }
-      return await ctx.runMutation(internal.businessCards.writeCard, {
+      const cleanedWorld = sanitizeWorldForSave(details.world);
+      const { world: _ignored, ...rest } = details;
+      void _ignored;
+      return await ctx.runMutation(internal.owners.businessCards.writeCard, {
         userId,
         details: {
-          ...details,
+          ...rest,
           displayName: details.displayName.trim(),
           branch: details.branch.trim(),
           rewards: details.rewards.map((reward) => ({ ...reward, name: reward.name.trim() }))
             .sort((a, b) => a.stamps - b.stamps),
+          ...(cleanedWorld ? { world: cleanedWorld } : {}),
         },
         assets: changes,
       });

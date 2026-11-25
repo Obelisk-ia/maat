@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError } from "convex/values";
-import type { Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import type { Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 
 /** Only a business's owner and staff may serve its customers, and only their own business's. */
 export async function currentStamper(ctx: QueryCtx) {
@@ -25,10 +25,3 @@ export async function followedCard(ctx: QueryCtx, organizationId: Id<"organizati
   return membership;
 }
 
-/** A customer's most recent delivered prizes, newest first. */
-export function latestRedemptions(ctx: QueryCtx, membershipId: Id<"memberships">, count: number) {
-  return ctx.db.query("redemptions")
-    .withIndex("by_membership", (q) => q.eq("membershipId", membershipId))
-    .order("desc")
-    .take(count);
-}
