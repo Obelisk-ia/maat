@@ -1,13 +1,15 @@
 import { ConvexError, v } from "convex/values";
-import { cardProgress, restartsCard } from "../lib/card-progress";
-import { parseMemberCode } from "../lib/member-code";
-import { normalizePhone } from "../lib/registration";
-import { sameStampDay } from "../lib/stamp-day";
-import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query, type QueryCtx } from "./_generated/server";
-import { countToday } from "./dailyStats";
-import { cardDesign, cardOf, restartsAfterFinalPrize } from "./organizations";
-import { currentStamper, followedCard, latestRedemptions } from "./stamper";
+import { cardProgress, restartsCard } from "../../lib/card-progress";
+import { parseMemberCode } from "../../lib/member-code";
+import { normalizePhone } from "../../lib/registration";
+import { sameStampDay } from "../../lib/stamp-day";
+import type { Doc, Id } from "../_generated/dataModel";
+import { mutation, query, type QueryCtx } from "../_generated/server";
+import { countToday } from "../dailyStats";
+import { cardDesign, cardOf, restartsAfterFinalPrize } from "../organizations";
+import { markReturned } from "../reminderSend";
+import { latestRedemptions } from "../redemptions";
+import { currentStamper, followedCard } from "./currentStamper";
 
 async function lastStampTime(ctx: QueryCtx, membershipId: Id<"memberships">) {
   const latest = await ctx.db.query("stampEvents")
@@ -98,6 +100,7 @@ export const add = mutation({
     });
     await ctx.db.insert("stampEvents", { membershipId, organizationId: organization._id, staffId });
     await countToday(ctx, organization._id, last === null ? { firstVisits: 1 } : { returnVisits: 1 });
+    await markReturned(ctx, membershipId);
     return { stamps: membership.stamps + 1 };
   },
 });

@@ -41,7 +41,7 @@ export function StaffKiosk({ user }: { user: Extract<AccountUser, { role: "staff
   return (
     <div className="kiosk">
       <div className="kiosk-relief" aria-hidden="true">
-        <Image src="/maat/thoth.jpg" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
+        <Image src="/maat/thoth.webp" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
       </div>
       <header className="kiosk-bar">
         <div className="kiosk-brand"><Brand /></div>

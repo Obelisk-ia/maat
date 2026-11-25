@@ -4,7 +4,9 @@ import { Check } from "lucide-react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, type CSSProperties } from "react";
-import { defaultBackgroundTint, stampedLook, stampFillColor, type CardDetails } from "@/lib/business-card";
+import {
+  defaultBackgroundTint, stampedLook, stampFillColor, stampUnitOf, stampWord, type CardDetails,
+} from "@/lib/business-card";
 import { cardProgress } from "@/lib/card-progress";
 import { StampDisc } from "./stamp-disc";
 import { stampGlyphs } from "./stamp-icons";
@@ -63,6 +65,7 @@ export function LoyaltyCard({ card, art, stamps: earned, redeemed, member, qr, p
   const waiting = next ? undefined : ready[0];
   const Icon = stampGlyphs[card.stampIcon];
   const stamped = stampedLook(card);
+  const unit = stampUnitOf(card);
   const goalsByStamp = new Set(goals.map((goal) => goal.stamps));
   const rows = balancedStampRows(total);
   const code = qr && <QRCodeSVG value={qr.value} size={86} marginSize={2} title={qr.title} />;
@@ -92,7 +95,7 @@ export function LoyaltyCard({ card, art, stamps: earned, redeemed, member, qr, p
             </div>
           </div>
           <div className="business-card-count" aria-live="polite">
-            <span>Sellos</span>
+            <span>{unit.plural}</span>
             <strong>{stamps}/{total}</strong>
           </div>
         </div>
@@ -130,7 +133,7 @@ export function LoyaltyCard({ card, art, stamps: earned, redeemed, member, qr, p
           <dl className="business-card-summary" aria-live="polite">
             <div><dt>Siguiente premio</dt><dd>{next?.name ?? waiting?.name ?? (goals.length ? "Metas completas" : "—")}</dd></div>
             <div><dt>Te faltan</dt><dd>
-              {remaining !== null ? `${remaining} ${remaining === 1 ? "sello" : "sellos"}` : waiting ? "¡Listo!" : "—"}
+              {remaining !== null ? `${remaining} ${stampWord(remaining, card)}` : waiting ? "¡Listo!" : "—"}
             </dd></div>
             <div><dt>Miembro</dt><dd>{member}</dd></div>
           </dl>

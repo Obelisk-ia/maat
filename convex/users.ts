@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
+import { mediaUrl } from "../lib/media-url";
 import { withPrizeIds } from "../lib/prizes";
 import { normalizePhone } from "../lib/registration";
 import type { Doc } from "./_generated/dataModel";
@@ -83,9 +84,10 @@ export const viewer = query({
       organizationId: organization._id,
       inviteCode: organization.inviteCode,
       card: organization.card ? withPrizeIds(organization.card.details) : null,
-      logoUrl: organization.card?.logoId ? await ctx.storage.getUrl(organization.card.logoId) : null,
-      backgroundUrl: organization.card?.backgroundId ? await ctx.storage.getUrl(organization.card.backgroundId) : null,
-      stampLogoUrl: organization.card?.stampLogoId ? await ctx.storage.getUrl(organization.card.stampLogoId) : null,
+      logoUrl: mediaUrl(organization.card?.logoId),
+      backgroundUrl: mediaUrl(organization.card?.backgroundId),
+      stampLogoUrl: mediaUrl(organization.card?.stampLogoId),
+      coverUrl: mediaUrl(organization.card?.coverId),
     };
   },
 });

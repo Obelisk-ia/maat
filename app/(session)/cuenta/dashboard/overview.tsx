@@ -8,7 +8,7 @@ import { lastVisitText, number } from "./format";
 import { Stat } from "./stat";
 import { VisitsChart } from "./visits-chart";
 
-type Data = FunctionReturnType<typeof api.dashboard.overview>;
+type Data = FunctionReturnType<typeof api.owners.dashboard.overview>;
 
 const people = (count: number) => `${number.format(count)} ${count === 1 ? "cliente" : "clientes"}`;
 

@@ -14,6 +14,8 @@ import { parseJoinLink } from "@/lib/join-link";
 import { formatPhone } from "@/lib/registration";
 import { ScanDialog } from "../scan-dialog";
 import { AccountPage, initials } from "./account-page";
+import { AlertsWelcome } from "./alerts-welcome";
+import { usePush } from "./use-push";
 import { CardDetail } from "./card-detail";
 import { CardList } from "./card-list";
 import { enterSection, foldCardIntoList, motionAllowed, visibleRect, type Rect } from "./motion";
@@ -30,17 +32,20 @@ const navigation = [
   { view: "account", label: "Cuenta", short: "Cuenta", icon: User },
 ] as const;
 
-export function Wallet({ customer, initialCards, joinId }: {
+export function Wallet({ customer, initialCards, joinId, cardId }: {
   customer: Customer;
   initialCards: WalletCard[];
   /** The business whose QR brought the customer here. */
   joinId: string | null;
+  /** The card a tapped notification is about. */
+  cardId: string | null;
 }) {
   const { isAuthenticated } = useConvexAuth();
   // The server's copy shows at once; the live one takes over so new stamps appear by themselves.
-  const cards = useQuery(api.memberships.mine, isAuthenticated ? {} : "skip") ?? initialCards;
-  const join = useMutation(api.memberships.join);
-  const leave = useMutation(api.memberships.leave);
+  const cards = useQuery(api.clients.memberships.mine, isAuthenticated ? {} : "skip") ?? initialCards;
+  const join = useMutation(api.clients.memberships.join);
+  const push = usePush();
+  const leave = useMutation(api.clients.memberships.leave);
   const [view, setView] = useState<View>("cards");
   // The open card, and where it sat in the list if it was opened from there.
   const [open, setOpen] = useState<{ id: string; from?: Rect }>();
@@ -57,6 +62,7 @@ export function Wallet({ customer, initialCards, joinId }: {
   const [seenStamps, setSeenStamps] = useState(() => new Map(cards.map((card) => [card.membershipId, card.stamps])));
   const [seenPrizes, setSeenPrizes] = useState(() => new Map(cards.map((card) => [card.membershipId, card.history.at(0)?.id])));
   const joinedFromLink = useRef(false);
+  const openedFromNotification = useRef(false);
 
   // Announce stamps as they arrive, and get the full-screen QR out of the way of the animation.
   if (cards.some((card) => seenStamps.get(card.membershipId) !== card.stamps)) {
@@ -162,6 +168,27 @@ export function Wallet({ customer, initialCards, joinId }: {
   }, [isAuthenticated, joinId, addCard]);
 
   useEffect(() => {
+    if (!cardId || openedFromNotification.current) return;
+    openedFromNotification.current = true;
+    window.history.replaceState(null, "", "/cuenta");
+    if (cards.some((card) => card.membershipId === cardId)) requestAnimationFrame(() => openCard(cardId));
+  }, [cardId, cards, openCard]);
+
+  // A notification tapped while the wallet is open shows its card without reloading.
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      const url = new URL((event as CustomEvent<string>).detail, window.location.origin);
+      if (url.pathname !== "/cuenta") return;
+      const wanted = url.searchParams.get("tarjeta");
+      if (wanted && !cards.some((card) => card.membershipId === wanted)) return;
+      event.preventDefault();
+      if (wanted) openCard(wanted);
+    };
+    window.addEventListener("maat:open", onOpen);
+    return () => window.removeEventListener("maat:open", onOpen);
+  }, [cards, openCard]);
+
+  useEffect(() => {
     const onPopState = () => { if (!window.history.state?.walletCard) leaveCardScreen(); };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -183,7 +210,7 @@ export function Wallet({ customer, initialCards, joinId }: {
   return (
     <div className="wallet" data-detail={view === "cards" && Boolean(openedCard)} data-intro={intro}>
       <div className="wallet-relief" aria-hidden="true">
-        <Image src="/maat/hathor.jpg" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
+        <Image src="/maat/hathor.webp" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
       </div>
 
       <aside className="wallet-sidebar">
@@ -217,11 +244,11 @@ export function Wallet({ customer, initialCards, joinId }: {
           <CardList cards={cards} name={customer.name} onOpen={openCard} onAdd={() => setScanning(true)} />
         </div>
         {view === "cards" && openedCard && (
-          <CardDetail key={openedCard.membershipId} card={openedCard} from={open?.from} member={customer.name}
+          <CardDetail key={openedCard.membershipId} card={openedCard} from={open?.from} member={customer.name} push={push}
             onBack={closeCard} onShowQr={() => setQrId(openedCard.membershipId)} onLeave={() => leaveCard(openedCard)} />
         )}
         {view === "rewards" && <div className="wallet-view"><RewardsPage cards={cards} onShowQr={setQrId} /></div>}
-        {view === "account" && <div className="wallet-view"><AccountPage customer={customer} /></div>}
+        {view === "account" && <div className="wallet-view"><AccountPage customer={customer} cards={cards} push={push} /></div>}
       </main>
 
       <nav className="wallet-tabs" aria-label="Secciones">
@@ -241,6 +268,7 @@ export function Wallet({ customer, initialCards, joinId }: {
           void addCard(organizationId);
           return null;
         }} />
+      <AlertsWelcome push={push} quiet={scanning || qrId !== undefined} />
       <QrDialog card={cards.find((card) => card.membershipId === qrId)} customer={customer} onClose={() => setQrId(undefined)} />
 
       <div className="wallet-toast-region" role="status">

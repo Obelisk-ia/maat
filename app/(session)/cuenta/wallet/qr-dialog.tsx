@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { stampWord } from "@/lib/business-card";
 import { cardProgress } from "@/lib/card-progress";
 import { formatMemberCode, memberQrValue } from "@/lib/member-code";
 import { formatPhone } from "@/lib/registration";
@@ -33,7 +34,7 @@ export function QrDialog({ card: requested, customer, onClose }: {
           title={`Tu QR de ${card.details.displayName}`} />
         <p className="wallet-qr-code">{formatMemberCode(card.code)}</p>
         <p className="wallet-qr-member">
-          {customer.name} · {stamps}/{total} sellos<br />
+          {customer.name} · {stamps}/{total} {stampWord(total, card.details)}<br />
           {ready.length > 0
             ? "Para canjear tu premio, muestra este QR o dicta el código."
             : `O dile tu celular: ${formatPhone(customer.phone)}`}

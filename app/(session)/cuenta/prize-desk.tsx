@@ -10,9 +10,10 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
+import { stampWord, type CardDetails } from "@/lib/business-card";
 import type { cardProgress } from "@/lib/card-progress";
 
-type Found = Extract<FunctionReturnType<typeof api.stamps.find>, { valid: true }>;
+type Found = Extract<FunctionReturnType<typeof api.staff.stamps.find>, { valid: true }>;
 type Match = Found["matches"][number];
 
 /** A confirmation for actions that can't be undone. */
@@ -56,15 +57,16 @@ function Confirm({ title, description, action, busyAction, open, onOpenChange, o
  * The prize side of a customer's card at the kiosk: the next prize to hand over, or a new card
  * when a full one has nothing left.
  */
-export function PrizeDesk({ match, progress, onScan, onDone, onError }: {
+export function PrizeDesk({ card, match, progress, onScan, onDone, onError }: {
+  card: CardDetails;
   match: Match;
   progress: ReturnType<typeof cardProgress>;
   onScan: () => void;
   onDone: (message: string) => void;
   onError: (message: string) => void;
 }) {
-  const deliver = useMutation(api.prizes.deliver);
-  const startNewCard = useMutation(api.prizes.startNewCard);
+  const deliver = useMutation(api.staff.prizes.deliver);
+  const startNewCard = useMutation(api.staff.prizes.startNewCard);
   const [confirming, setConfirming] = useState<"prize" | "card">();
   const { ready, stamps, total } = progress;
   const prize = ready[0];
@@ -86,7 +88,7 @@ export function PrizeDesk({ match, progress, onScan, onDone, onError }: {
       <div className="station-prize">
         <Gift aria-hidden="true" />
         <div>
-          <span>Premio listo · a los {prize.stamps} {prize.stamps === 1 ? "sello" : "sellos"}</span>
+          <span>Premio listo · Con {prize.stamps} {stampWord(prize.stamps, card)}</span>
           <strong>{prize.name}</strong>
           {ready.length > 1 && (
             <span>{ready.length === 2 ? "Después queda 1 premio más." : `Después quedan ${ready.length - 1} premios más.`}</span>
@@ -106,8 +108,8 @@ export function PrizeDesk({ match, progress, onScan, onDone, onError }: {
               })}>
               <p>
                 {restarts
-                  ? "Es el último premio: la tarjeta del cliente vuelve a 0 sellos."
-                  : `El cliente conserva sus ${stamps} sellos.`}
+                  ? `Es el último premio: la tarjeta del cliente vuelve a 0 ${stampWord(0, card)}.`
+                  : `El cliente conserva sus ${stamps} ${stampWord(stamps, card)}.`}
               </p>
             </Confirm>
           </>
@@ -134,7 +136,7 @@ export function PrizeDesk({ match, progress, onScan, onDone, onError }: {
       <Button type="button" size="lg" onClick={() => setConfirming("card")}>Empezar tarjeta nueva</Button>
       <Confirm open={confirming === "card"} onOpenChange={(open) => setConfirming(open ? "card" : undefined)}
         title="¿Empezar una tarjeta nueva?"
-        description={`La tarjeta de ${match.customerName} vuelve a 0 sellos. No se puede deshacer.`}
+        description={`La tarjeta de ${match.customerName} vuelve a 0 ${stampWord(0, card)}. No se puede deshacer.`}
         action="Sí, empezar" busyAction="Guardando…"
         onConfirm={() => attempt(async () => {
           await startNewCard({ membershipId: match.membershipId });

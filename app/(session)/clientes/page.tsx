@@ -27,14 +27,14 @@ const cards = [
 // The art and the form both need the scanned business; one request fetches it once.
 const scannedBusiness = cache(async (organizationId: string) => {
   await connection();
-  return fetchQuery(api.organizations.publicCard, { organizationId });
+  return fetchQuery(api.clients.businesses.publicCard, { organizationId });
 });
 
 export default function ClientsPage(props: PageProps<"/clientes">) {
   return (
     <div className="auth-page client-entry">
       <div className="maat-relief" aria-hidden="true">
-        <Image src="/maat/hathor.jpg" alt="" width={1536} height={1024}
+        <Image src="/maat/hathor.webp" alt="" width={1536} height={1024}
           sizes="(max-width: 876px) 130vw, 1140px" loading="eager" className="is-active" />
       </div>
       <main className="client-entry-grid">

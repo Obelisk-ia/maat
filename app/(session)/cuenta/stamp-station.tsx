@@ -21,7 +21,7 @@ import { PrizeDesk } from "./prize-desk";
 import { ScanDialog } from "./scan-dialog";
 import "./stamp-station.css";
 
-type Found = Extract<FunctionReturnType<typeof api.stamps.find>, { valid: true }>;
+type Found = Extract<FunctionReturnType<typeof api.staff.stamps.find>, { valid: true }>;
 
 /** Where owners and staff serve a customer: find their card, add a stamp or hand over a prize. */
 export function StampStation() {
@@ -31,7 +31,7 @@ export function StampStation() {
   const [term, setTerm] = useState("");
   const [problem, setProblem] = useState<{ field: "phone" | "code"; text: string }>();
   const [scanning, setScanning] = useState(false);
-  const result = useQuery(api.stamps.find, isAuthenticated && term ? { term } : "skip");
+  const result = useQuery(api.staff.stamps.find, isAuthenticated && term ? { term } : "skip");
   const resultArea = useRef<HTMLDivElement>(null);
   const foundId = term && result?.valid ? result.matches[0]?.membershipId : undefined;
 
@@ -133,7 +133,7 @@ function StampTarget({ design, match, onScan }: {
   match: Found["matches"][number];
   onScan: () => void;
 }) {
-  const addStamp = useMutation(api.stamps.add);
+  const addStamp = useMutation(api.staff.stamps.add);
   const [pending, setPending] = useState(false);
   // What the last action did, in the numbers of that moment.
   const [done, setDone] = useState("");
@@ -178,7 +178,7 @@ function StampTarget({ design, match, onScan }: {
         <Plus aria-hidden="true" />
         {full ? "Tarjeta completa" : stampedToday ? "Ya tiene su sello de hoy" : pending ? "Agregando…" : "Agregar 1 sello"}
       </Button>
-      <PrizeDesk match={match} progress={progress} onScan={onScan} onError={setError}
+      <PrizeDesk card={design.details} match={match} progress={progress} onScan={onScan} onError={setError}
         onDone={(message) => { setError(""); setDone(message); }} />
       {match.recentPrizes.length > 0 && (
         <div className="station-history">

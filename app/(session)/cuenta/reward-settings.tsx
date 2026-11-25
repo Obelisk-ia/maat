@@ -8,8 +8,8 @@ import "./reward-settings.css";
 
 export function RewardSettings() {
   const { isAuthenticated } = useConvexAuth();
-  const settings = useQuery(api.organizations.rewardSettings, isAuthenticated ? {} : "skip");
-  const save = useMutation(api.organizations.setRestartAfterFinalPrize);
+  const settings = useQuery(api.owners.settings.rewardSettings, isAuthenticated ? {} : "skip");
+  const save = useMutation(api.owners.settings.setRestartAfterFinalPrize);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean }>();
   const on = settings?.restartAfterFinalPrize;

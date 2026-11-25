@@ -1,10 +1,10 @@
 import { ConvexError, v } from "convex/values";
-import { cardProgress, restartsCard } from "../lib/card-progress";
-import { parseMemberCode } from "../lib/member-code";
-import { mutation } from "./_generated/server";
-import { countToday } from "./dailyStats";
-import { cardOf, restartsAfterFinalPrize } from "./organizations";
-import { currentStamper, followedCard } from "./stamper";
+import { cardProgress, restartsCard } from "../../lib/card-progress";
+import { parseMemberCode } from "../../lib/member-code";
+import { mutation } from "../_generated/server";
+import { countToday } from "../dailyStats";
+import { cardOf, restartsAfterFinalPrize } from "../organizations";
+import { currentStamper, followedCard } from "./currentStamper";
 
 /** Hands over the next ready prize. It can't be undone. */
 export const deliver = mutation({

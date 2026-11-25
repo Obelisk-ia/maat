@@ -10,7 +10,7 @@ const roles = { owner: "Dueño", staff: "Staff" } as const;
 /** Every prize handed over, and by whom. */
 export function Deliveries({ today }: { today: string }) {
   const { isAuthenticated } = useConvexAuth();
-  const data = useQuery(api.dashboard.deliveries, isAuthenticated ? {} : "skip");
+  const data = useQuery(api.owners.dashboard.deliveries, isAuthenticated ? {} : "skip");
 
   if (!data) return <p className="dashboard-loading" role="status">Cargando las entregas…</p>;
   if (data.deliveries.length === 0) {
