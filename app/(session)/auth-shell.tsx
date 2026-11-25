@@ -6,9 +6,9 @@ import { Brand } from "../brand";
 type Role = "owner" | "staff" | "client";
 
 const reliefs = [
-  { role: "owner", src: "/maat/maat.png", width: 1672, height: 941 },
-  { role: "staff", src: "/maat/thoth.jpg", width: 1536, height: 1024 },
-  { role: "client", src: "/maat/hathor.jpg", width: 1536, height: 1024 },
+  { role: "owner", src: "/maat/maat.webp", width: 1600, height: 900 },
+  { role: "staff", src: "/maat/thoth.webp", width: 1536, height: 1024 },
+  { role: "client", src: "/maat/hathor.webp", width: 1536, height: 1024 },
 ];
 
 export function AuthShell({ children, role = "owner" }: { children: ReactNode; role?: Role }) {

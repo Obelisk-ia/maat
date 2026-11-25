@@ -210,7 +210,7 @@ export function Wallet({ customer, initialCards, joinId, cardId }: {
   return (
     <div className="wallet" data-detail={view === "cards" && Boolean(openedCard)} data-intro={intro}>
       <div className="wallet-relief" aria-hidden="true">
-        <Image src="/maat/hathor.jpg" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
+        <Image src="/maat/hathor.webp" alt="" width={1536} height={1024} sizes="(max-width: 876px) 130vw, 1140px" loading="eager" />
       </div>
 
       <aside className="wallet-sidebar">

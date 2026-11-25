@@ -107,7 +107,7 @@ export function OwnerWorkspace({ user }: { user: Owner }) {
       <OwnerSidebar user={user} view={view} onView={setView} />
       <SidebarInset className="owner-main min-w-0">
         <div aria-hidden="true" className="owner-relief">
-          <Image src="/maat/maat.png" width={1672} height={941} sizes="(max-width: 900px) 80vw, 900px" alt="" />
+          <Image src="/maat/maat.webp" width={1600} height={900} sizes="(max-width: 900px) 80vw, 900px" alt="" />
         </div>
         <header className="owner-toolbar">
           <SidebarTrigger title="Alternar navegación" aria-label="Alternar navegación" />

@@ -34,7 +34,7 @@ export default function ClientsPage(props: PageProps<"/clientes">) {
   return (
     <div className="auth-page client-entry">
       <div className="maat-relief" aria-hidden="true">
-        <Image src="/maat/hathor.jpg" alt="" width={1536} height={1024}
+        <Image src="/maat/hathor.webp" alt="" width={1536} height={1024}
           sizes="(max-width: 876px) 130vw, 1140px" loading="eager" className="is-active" />
       </div>
       <main className="client-entry-grid">

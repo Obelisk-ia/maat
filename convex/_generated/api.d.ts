@@ -17,6 +17,7 @@ import type * as clients_notifications from "../clients/notifications.js";
 import type * as crons from "../crons.js";
 import type * as dailyStats from "../dailyStats.js";
 import type * as http from "../http.js";
+import type * as media from "../media.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as organizations from "../organizations.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   dailyStats: typeof dailyStats;
   http: typeof http;
+  media: typeof media;
   migrations: typeof migrations;
   notifications: typeof notifications;
   organizations: typeof organizations;

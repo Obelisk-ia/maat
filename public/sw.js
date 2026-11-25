@@ -1,17 +1,24 @@
-// Maat service worker. It shows notifications, and it stores only the "no connection" page.
-// Everything else, including every page with account data, always comes from the network.
-const CACHE = "maat-offline-v1";
+// Maat service worker.
+// - Shows push notifications and opens the matching card.
+// - Keeps the offline fallback page for failed document navigations.
+// - Cache-first local storage for immutable card media (/api/media/*) and static art (/maat/*, /icons/*),
+//   shared across every role (owner, staff, client). Because every uploaded card image receives a brand-new
+//   Convex storageId, updating a logo/background/cover automatically requests a new URL with zero stale cache.
+const OFFLINE_CACHE = "maat-offline-v1";
+const MEDIA_CACHE = "maat-media-v1";
+const KEEP_CACHES = new Set([OFFLINE_CACHE, MEDIA_CACHE]);
 const OFFLINE_PAGE = "/offline.html";
+const MAX_MEDIA_ENTRIES = 160;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.add(new Request(OFFLINE_PAGE, { cache: "reload" }))));
+  event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.add(new Request(OFFLINE_PAGE, { cache: "reload" }))));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const names = await caches.keys();
-    await Promise.all(names.filter((name) => name !== CACHE).map((name) => caches.delete(name)));
+    await Promise.all(names.filter((name) => !KEEP_CACHES.has(name)).map((name) => caches.delete(name)));
     await self.clients.claim();
   })());
 });
@@ -53,7 +60,45 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(showPage(event.notification.data?.url));
 });
 
+function isCacheableMedia(request) {
+  if (request.method !== "GET") return false;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  return (
+    url.pathname.startsWith("/api/media/") ||
+    url.pathname.startsWith("/maat/") ||
+    url.pathname.startsWith("/icons/")
+  );
+}
+
+async function trimMediaCache(cache) {
+  const keys = await cache.keys();
+  if (keys.length <= MAX_MEDIA_ENTRIES) return;
+  const excess = keys.length - MAX_MEDIA_ENTRIES;
+  await Promise.all(keys.slice(0, excess).map((key) => cache.delete(key)));
+}
+
+async function cacheFirstMedia(request) {
+  const cache = await caches.open(MEDIA_CACHE);
+  const hit = await cache.match(request);
+  if (hit) return hit;
+
+  const response = await fetch(request);
+  if (response.ok && response.status === 200) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.startsWith("image/")) {
+      await cache.put(request, response.clone());
+      void trimMediaCache(cache);
+    }
+  }
+  return response;
+}
+
 self.addEventListener("fetch", (event) => {
+  if (isCacheableMedia(event.request)) {
+    event.respondWith(cacheFirstMedia(event.request));
+    return;
+  }
   if (event.request.mode !== "navigate") return;
   event.respondWith(fetch(event.request).catch(async () => await caches.match(OFFLINE_PAGE) ?? Response.error()));
 });

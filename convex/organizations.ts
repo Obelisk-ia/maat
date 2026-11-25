@@ -1,7 +1,8 @@
 import { ConvexError } from "convex/values";
 import { defaultBusinessCard } from "../lib/business-card";
+import { mediaUrl } from "../lib/media-url";
 import { withPrizeIds } from "../lib/prizes";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 /** The business's card design, or the starting one while the owner hasn't saved theirs. */
@@ -14,17 +15,16 @@ export const restartsAfterFinalPrize = (organization: Doc<"organizations">) =>
   organization.restartAfterFinalPrize ?? true;
 
 /** What a customer may see of a business: its card design. Never the staff invite code. */
-export async function cardDesign(ctx: QueryCtx, organization: Doc<"organizations">) {
-  const url = (id: Id<"_storage"> | undefined) => id ? ctx.storage.getUrl(id) : null;
+export async function cardDesign(_ctx: QueryCtx, organization: Doc<"organizations">) {
   const { card } = organization;
   return {
     organizationId: organization._id,
     businessName: organization.name,
     details: cardOf(organization),
-    logoUrl: await url(card?.logoId),
-    backgroundUrl: await url(card?.backgroundId),
-    stampLogoUrl: await url(card?.stampLogoId),
-    coverUrl: await url(card?.coverId),
+    logoUrl: mediaUrl(card?.logoId),
+    backgroundUrl: mediaUrl(card?.backgroundId),
+    stampLogoUrl: mediaUrl(card?.stampLogoId),
+    coverUrl: mediaUrl(card?.coverId),
   };
 }
 

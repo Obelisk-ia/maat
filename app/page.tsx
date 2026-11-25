@@ -41,7 +41,7 @@ export default function LandingPage() {
     <LandingMotion>
       {/* Permanent Maat Relief */}
         <div className="maat-relief" aria-hidden="true">
-          <Image src="/maat/maat.png" alt="" width={1672} height={941}
+          <Image src="/maat/maat.webp" alt="" width={1600} height={900}
             sizes="(max-width: 1288px) 90vw, 1160px" loading="eager" fetchPriority="high" />
         </div>
 
@@ -149,7 +149,7 @@ export default function LandingPage() {
 
               <div className="role-split">
                 <article className="role-pane gsap-role">
-                  <div className="role-art"><Image src="/maat/maat.png" alt="Relieve en piedra caliza de la diosa Maat" width={1672} height={941} sizes="(max-width: 820px) 100vw, 550px" /></div>
+                  <div className="role-art"><Image src="/maat/maat.webp" alt="Relieve en piedra caliza de la diosa Maat" width={1600} height={900} sizes="(max-width: 820px) 100vw, 550px" /></div>
                   <div className="eyebrow" style={{ marginBottom: 8 }}>DUEÑO</div>
                   <h3 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800 }}>Todo tu negocio</h3>
                   <ul className="role-list">
@@ -161,7 +161,7 @@ export default function LandingPage() {
                 </article>
 
                 <article className="role-pane is-staff gsap-role">
-                  <div className="role-art"><Image src="/maat/thoth.jpg" alt="Relieve en piedra pizarra del dios Thot con su paleta de escriba" width={1536} height={1024} sizes="(max-width: 820px) 100vw, 550px" /></div>
+                  <div className="role-art"><Image src="/maat/thoth.webp" alt="Relieve en piedra pizarra del dios Thot con su paleta de escriba" width={1536} height={1024} sizes="(max-width: 820px) 100vw, 550px" /></div>
                   <div className="eyebrow" style={{ marginBottom: 8, color: "var(--accent-amber-ink)" }}>STAFF</div>
                   <h3 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800 }}>Escanear y listo</h3>
                   <ul className="role-list">
@@ -176,7 +176,7 @@ export default function LandingPage() {
 
           {/* CLIENTES */}
           <section id="clientes" className="client-band" aria-labelledby="clientes-title">
-            <Image className="client-band-img" src="/maat/hathor.jpg" alt="" width={1536} height={1024} sizes="100vw" />
+            <Image className="client-band-img" src="/maat/hathor.webp" alt="" width={1536} height={1024} sizes="100vw" />
             <div className="container">
               <div className="client-copy gsap-reveal">
                 <h2 id="clientes-title" className="section-title">Tus clientes, todas sus tarjetas en un solo lugar.</h2>
@@ -187,7 +187,7 @@ export default function LandingPage() {
           </section>
 
           <div className="frieze" aria-hidden="true">
-            <Image src="/maat/ofrendas.jpg" alt="" width={1536} height={1024} sizes="100vw" />
+            <Image src="/maat/ofrendas.webp" alt="" width={1536} height={1024} sizes="100vw" />
           </div>
 
           {/* FINAL CTA */}
