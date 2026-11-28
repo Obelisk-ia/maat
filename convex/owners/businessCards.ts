@@ -8,12 +8,16 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { action, internalMutation, internalQuery, type QueryCtx } from "../_generated/server";
 import { cardDetails } from "../cardModel";
+import { isOrganizationActive } from "../organizations";
 
 async function ownerOrganization(ctx: QueryCtx, userId: Id<"users">) {
   const user = await ctx.db.get("users", userId);
   if (user?.account.role !== "owner") throw new ConvexError("Solo el dueño puede editar la tarjeta.");
   const organization = await ctx.db.get("organizations", user.account.organizationId);
   if (!organization) throw new ConvexError("No se encontró el negocio.");
+  if (!isOrganizationActive(organization)) {
+    throw new ConvexError("Tu cuenta de negocio está desactivada.");
+  }
   return organization;
 }
 

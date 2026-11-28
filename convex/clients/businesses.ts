@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { cardDesign } from "../organizations";
+import { cardDesign, isOrganizationActive } from "../organizations";
 
 // Public: someone who just scanned a business's QR sees its card before signing up.
 export const publicCard = query({
@@ -8,6 +8,6 @@ export const publicCard = query({
   handler: async (ctx, args) => {
     const organizationId = ctx.db.normalizeId("organizations", args.organizationId);
     const organization = organizationId && await ctx.db.get("organizations", organizationId);
-    return organization ? await cardDesign(ctx, organization) : null;
+    return organization && isOrganizationActive(organization) ? await cardDesign(ctx, organization) : null;
   },
 });

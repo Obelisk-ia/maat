@@ -3,13 +3,14 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { cardProgress } from "../lib/card-progress";
+import { defaultProximityRadiusMeters, distanceMeters } from "../lib/geo";
 import {
   byPriority, dueAgain, inAudience, lastSendHour, messageValues, renderMessage, ruleApplies, type Audience,
 } from "../lib/reminders";
 import { dayKey, hourOf } from "../lib/stamp-day";
 import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
-import { cardOf } from "./organizations";
+import { cardOf, isOrganizationActive } from "./organizations";
 import { batchSize, daysAway, devicesFor, recentLog, sendToCard } from "./reminderSend";
 
 /** Runs every hour: starts each business's reminders once its hour has come. */
@@ -25,6 +26,8 @@ export const tick = internalMutation({
     // One row per business with reminders.
     for (const plan of await ctx.db.query("reminderPlans").collect()) {
       if (hour < plan.sendHour || plan.lastRunDay === today || !plan.rules.some((rule) => rule.enabled)) continue;
+      const organization = await ctx.db.get("organizations", plan.organizationId);
+      if (!organization || !isOrganizationActive(organization)) continue;
       await ctx.db.patch("reminderPlans", plan._id, { lastRunDay: today });
       await ctx.scheduler.runAfter(0, internal.reminders.runPlan, {
         planId: plan._id, paginationOpts: { numItems: batchSize, cursor: null },
@@ -39,7 +42,7 @@ export const runPlan = internalMutation({
   handler: async (ctx, { planId, paginationOpts }) => {
     const plan = await ctx.db.get("reminderPlans", planId);
     const organization = plan && await ctx.db.get("organizations", plan.organizationId);
-    if (!plan || !organization) return null;
+    if (!plan || !organization || !isOrganizationActive(organization)) return null;
     const card = cardOf(organization);
     const rules = plan.rules.filter((rule) => rule.enabled).sort(byPriority);
     const today = dayKey(Date.now());
@@ -81,7 +84,7 @@ export const runCampaign = internalMutation({
     const campaign = await ctx.db.get("campaigns", campaignId);
     if (!campaign || campaign.status === "cancelled" || campaign.status === "sent") return null;
     const organization = await ctx.db.get("organizations", campaign.organizationId);
-    if (!organization) return null;
+    if (!organization || !isOrganizationActive(organization)) return null;
     const card = cardOf(organization);
     // Who's included is decided now, at the time of sending.
     const today = dayKey(Date.now());
@@ -91,14 +94,21 @@ export const runCampaign = internalMutation({
       .paginate(paginationOpts);
 
     let { matched, queued } = campaign;
+    const nearbyRadius = target.radiusMeters ?? organization.proximityAlert?.radiusMeters ?? defaultProximityRadiusMeters;
     for (const membership of page.page) {
       if (membership.leftAt !== undefined) continue;
       const progress = cardProgress(card, membership.stamps, membership.redeemedPrizes);
-      if (!inAudience(target, progress, daysAway(membership, today))) continue;
+      const customer = await ctx.db.get("users", membership.clientId);
+      if (target.type === "nearby") {
+        if (!organization.location || !customer?.lastLocation) continue;
+        if (distanceMeters(organization.location, customer.lastLocation) > nearbyRadius) continue;
+      } else if (!inAudience(target, progress, daysAway(membership, today))) {
+        continue;
+      }
       matched++;
       const devices = await devicesFor(ctx, membership);
       if (devices.length === 0) continue;
-      const name = (await ctx.db.get("users", membership.clientId))?.name ?? "";
+      const name = customer?.name ?? "";
       const sent = await sendToCard(ctx, membership, {
         title: card.displayName,
         body: renderMessage(campaign.message, messageValues(target.type, progress, name, card.displayName)),

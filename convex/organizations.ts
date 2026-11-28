@@ -10,6 +10,10 @@ export function cardOf(organization: Doc<"organizations">) {
   return withPrizeIds(organization.card?.details ?? defaultBusinessCard(organization.name));
 }
 
+/** Whether the business is active. Missing on legacy organizations means active. */
+export const isOrganizationActive = (organization: Doc<"organizations">) =>
+  organization.active ?? true;
+
 /** Whether delivering the last prize starts the customer on a new card. */
 export const restartsAfterFinalPrize = (organization: Doc<"organizations">) =>
   organization.restartAfterFinalPrize ?? true;

@@ -8,8 +8,8 @@ import { api } from "@/convex/_generated/api";
 import { joinPath, parseBusinessId } from "@/lib/join-link";
 import { AuthShell } from "../auth-shell";
 import { SessionProvider } from "../session-provider";
-import { BusinessAccountNotice, StaffKiosk } from "./account";
-import { OwnerWorkspace } from "./owner-workspace";
+import { BusinessAccountGate, BusinessAccountNotice } from "./account";
+import { AdminWorkspace } from "./admin-workspace";
 import { Wallet } from "./wallet/wallet";
 import "./owner.css";
 
@@ -51,7 +51,7 @@ async function AccountContent({ searchParams }: Pick<PageProps<"/cuenta">, "sear
 
   return (
     <SessionProvider>
-      {user.role === "owner" ? <OwnerWorkspace user={user} /> : <StaffKiosk user={user} />}
+      {user.role === "admin" ? <AdminWorkspace user={user} /> : <BusinessAccountGate initialUser={user} />}
     </SessionProvider>
   );
 }

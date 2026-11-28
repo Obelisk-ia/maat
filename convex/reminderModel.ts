@@ -18,7 +18,8 @@ export const reminderRule = v.object({
 });
 
 export const audience = v.object({
-  type: v.union(v.literal("all"), reminderType),
+  type: v.union(v.literal("all"), reminderType, v.literal("nearby")),
   stamps: v.number(),
   days: v.number(),
+  radiusMeters: v.optional(v.number()),
 });

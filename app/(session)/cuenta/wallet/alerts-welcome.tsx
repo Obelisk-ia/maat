@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, Check } from "lucide-react";
+import { Bell, BellRing, Check, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -8,6 +8,7 @@ import {
 import { installState } from "@/components/pwa/install-store";
 import { countWelcome, timesWelcomed, welcomeLimit } from "@/components/pwa/push-device";
 import { PushHelp } from "@/components/pwa/push-help";
+import type { CustomerLocation } from "./use-location";
 import type { Push } from "./use-push";
 
 // Long enough for the screen, or the card just added, to settle first.
@@ -85,6 +86,86 @@ export function AlertsWelcome({ push, quiet }: {
         {!done && (
           <button type="button" className="wallet-welcome-later" onClick={() => setOpen(false)}>
             {blocked ? "Entendido" : "Ahora no"}
+          </button>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const LOCATION_PROMPT_KEY = "maat:location-welcome:v1";
+
+function locationPromptSeen() {
+  try {
+    return window.localStorage.getItem(LOCATION_PROMPT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markLocationPromptSeen() {
+  try {
+    window.localStorage.setItem(LOCATION_PROMPT_KEY, "1");
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+/** Asks the customer to enable location for nearby business alerts once push alerts have settled. */
+export function LocationWelcome({ location, push, quiet }: {
+  location: CustomerLocation;
+  push: Push;
+  quiet: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const shown = useRef(false);
+  const due = location.state === "ask" && push.state !== "ask" && push.state !== "loading" && !location.busy && !quiet;
+
+  useEffect(() => {
+    if (!due || shown.current || locationPromptSeen()) return;
+    const timer = setTimeout(() => {
+      if (shown.current || locationPromptSeen()) return;
+      shown.current = true;
+      markLocationPromptSeen();
+      setOpen(true);
+    }, settleMs + 300);
+    return () => clearTimeout(timer);
+  }, [due]);
+
+  useEffect(() => {
+    if (!open || location.state !== "on") return;
+    const timer = setTimeout(() => setOpen(false), doneMs);
+    return () => clearTimeout(timer);
+  }, [open, location.state]);
+
+  const done = location.state === "on";
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="wallet-welcome wallet-sheet">
+        <DialogHeader className="items-center">
+          <span className="wallet-welcome-icon" data-done={done} aria-hidden="true">
+            {done ? <Check /> : <MapPin />}
+          </span>
+          <DialogTitle className="m-0 text-center">
+            {done ? "Ubicación activada" : "Avisos cuando estés cerca"}
+          </DialogTitle>
+          <DialogDescription className="m-0 text-center">
+            {done
+              ? "Puedes cambiarlo cuando quieras en Cuenta."
+              : "Activa tu ubicación para recibir mensajes especiales de tus negocios favoritos cuando pases cerca."}
+          </DialogDescription>
+        </DialogHeader>
+        {location.error && <p className="wallet-error" role="alert">{location.error}</p>}
+        {!done && (
+          <button type="button" className="wallet-welcome-allow" disabled={location.busy}
+            onClick={() => void location.enable()}>
+            <MapPin aria-hidden="true" /> {location.busy ? "Activando…" : "Permitir ubicación"}
+          </button>
+        )}
+        {!done && (
+          <button type="button" className="wallet-welcome-later" onClick={() => setOpen(false)}>
+            Ahora no
           </button>
         )}
       </DialogContent>

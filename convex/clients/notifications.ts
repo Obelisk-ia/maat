@@ -1,10 +1,15 @@
 import { ConvexError, v } from "convex/values";
+import { cardProgress } from "../../lib/card-progress";
+import { distanceMeters, isValidCoordinates } from "../../lib/geo";
 import { arePushKeys, isPushServiceUrl } from "../../lib/push-subscription";
+import { messageValues, renderMessage } from "../../lib/reminders";
+import { dayKey, daysBetween } from "../../lib/stamp-day";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query, type QueryCtx } from "../_generated/server";
 import { isMuted } from "../notifications";
-import { cardOf } from "../organizations";
+import { cardOf, isOrganizationActive } from "../organizations";
+import { dailyLimitsOff, devicesFor, recentLog, sendToCard } from "../reminderSend";
 import { currentClient } from "./currentClient";
 
 // A customer's phones, tablets and computers. Past this, the oldest is dropped.
@@ -38,6 +43,7 @@ export const status = query({
       subscribed: mine !== null,
       lastResult: mine?.lastResult ?? null,
       mutedCards: muted.map((row) => row.membershipId),
+      hasLocation: user.lastLocation !== undefined,
     };
   },
 });
@@ -123,5 +129,85 @@ export const sendTest = mutation({
       subscriptionId: device._id, membershipId: membership?._id, message, ttlSeconds: 300,
     });
     return { sent: true as const };
+  },
+});
+
+/**
+ * Updates the customer's last known location and sends any eligible proximity push notification
+ * for businesses they follow whose radius they are currently inside.
+ */
+export const reportLocation = mutation({
+  args: { lat: v.number(), lng: v.number() },
+  handler: async (ctx, { lat, lng }) => {
+    const user = await currentClient(ctx);
+    if (!isValidCoordinates(lat, lng)) {
+      throw new ConvexError("Ubicación no válida.");
+    }
+    const now = Date.now();
+    const coords = { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
+    await ctx.db.patch("users", user._id, {
+      lastLocation: { ...coords, updatedAt: now },
+    });
+
+    if (!process.env.VAPID_PRIVATE_KEY) {
+      return { checked: 0, triggered: [] as string[] };
+    }
+
+    const memberships = await ctx.db.query("memberships")
+      .withIndex("by_client_and_organization", (q) => q.eq("clientId", user._id))
+      .collect();
+    const followed = memberships.filter((membership) => membership.leftAt === undefined);
+    const today = dayKey(now);
+    const triggered: string[] = [];
+
+    for (const membership of followed) {
+      const organization = await ctx.db.get("organizations", membership.organizationId);
+      if (!organization || !isOrganizationActive(organization)) continue;
+      if (!organization.location || !organization.proximityAlert?.enabled) continue;
+
+      const { radiusMeters, cooldownDays, message } = organization.proximityAlert;
+      if (!message.trim()) continue;
+      if (distanceMeters(organization.location, coords) > radiusMeters) continue;
+
+      const devices = await devicesFor(ctx, membership);
+      if (devices.length === 0) continue;
+
+      const log = await recentLog(ctx, membership._id);
+      if (!dailyLimitsOff()) {
+        const recentProximity = log.find(
+          (entry) => entry.proximity === true && entry.accepted !== false && daysBetween(entry.day, today) < cooldownDays,
+        );
+        if (recentProximity) continue;
+      }
+
+      const card = cardOf(organization);
+      const progress = cardProgress(card, membership.stamps, membership.redeemedPrizes);
+      const sent = await sendToCard(
+        ctx,
+        membership,
+        {
+          title: card.displayName,
+          body: renderMessage(message, messageValues("nearby", progress, user.name, card.displayName)),
+        },
+        { proximity: true },
+        log,
+        devices,
+      );
+      if (sent) triggered.push(card.displayName);
+    }
+
+    return { checked: followed.length, triggered };
+  },
+});
+
+/** Stops sharing the customer's location and deletes their last stored coordinates. */
+export const clearLocation = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await currentClient(ctx);
+    if (user.lastLocation !== undefined) {
+      await ctx.db.patch("users", user._id, { lastLocation: undefined });
+    }
+    return null;
   },
 });

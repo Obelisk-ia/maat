@@ -64,8 +64,16 @@
 .campaign-badge[data-status="sent"] { background: rgb(31 74 59 / 14%); color: #1f4a3b; }
 .campaign-badge[data-status="scheduled"], .campaign-badge[data-status="sending"] { background: rgb(47 100 160 / 16%); color: #1e4570; }
 
+.campaign-location-box { display: grid; gap: 12px; padding: 14px; border: 1px solid rgb(31 30 28 / 12%); border-radius: 12px; background: rgb(255 255 255 / 45%); }
+.campaign-location-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.campaign-map-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgb(31 74 59 / 12%); color: #1f4a3b; font-size: 12px; font-weight: 700; text-decoration: none; }
+.campaign-map-link:hover { text-decoration: underline; }
+.campaign-map-link svg { width: 14px; height: 14px; flex: none; }
+.campaign-location-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.campaign-location-inputs input { background: #fdfbf7; }
+
 @media (max-width: 760px) {
-  .campaign-compose { grid-template-columns: minmax(0, 1fr); }
+  .campaign-compose, .campaign-location-inputs { grid-template-columns: minmax(0, 1fr); }
   .campaign-message { min-height: 100px; }
   .campaign-section { padding: 16px; }
   .campaign-rules > li { padding: 12px; }

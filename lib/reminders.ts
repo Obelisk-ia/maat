@@ -1,5 +1,6 @@
 // The notifications a business sends: who they're for and what they say.
 import type { cardProgress } from "./card-progress";
+import { maxProximityRadiusMeters, minProximityRadiusMeters } from "./geo";
 import { daysBetween } from "./stamp-day";
 
 export const reminderTypes = {
@@ -17,13 +18,17 @@ export const reminderTypes = {
   },
 } as const;
 export type ReminderType = keyof typeof reminderTypes;
-export type AudienceType = ReminderType | "all";
+export type AudienceType = ReminderType | "all" | "nearby";
 
 export const audienceLabels: Record<AudienceType, string> = {
-  all: "Todos", near: "Cerca de un premio", ready: "Con premio listo", inactive: "Sin venir hace tiempo",
+  all: "Todos",
+  near: "Cerca de un premio",
+  ready: "Con premio listo",
+  inactive: "Sin venir hace tiempo",
+  nearby: "Clientes cercanos",
 };
 
-export type Audience = { type: AudienceType; stamps: number; days: number };
+export type Audience = { type: AudienceType; stamps: number; days: number; radiusMeters?: number };
 export type Rule = {
   id: string; type: ReminderType; stamps: number; days: number; message: string; enabled: boolean;
   /** Sent again this often while the customer stays in the situation. Left out: sent once. */
@@ -66,9 +71,12 @@ export function messageProblem(message: string, type: AudienceType) {
 
 const whole = (value: number, least: number, most: number) => Number.isInteger(value) && value >= least && value <= most;
 
-export function audienceProblem({ type, stamps, days }: Audience) {
+export function audienceProblem({ type, stamps, days, radiusMeters }: Audience) {
   if (type === "near" && !whole(stamps, 1, 99)) return "Los sellos que faltan van de 1 a 99.";
   if (type === "inactive" && !whole(days, 1, 365)) return "Los días sin venir van de 1 a 365.";
+  if (type === "nearby" && radiusMeters !== undefined && !whole(radiusMeters, minProximityRadiusMeters, maxProximityRadiusMeters)) {
+    return `El radio va de ${minProximityRadiusMeters} m a ${maxProximityRadiusMeters} m.`;
+  }
   return null;
 }
 

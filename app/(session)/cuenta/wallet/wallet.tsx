@@ -14,7 +14,8 @@ import { parseJoinLink } from "@/lib/join-link";
 import { formatPhone } from "@/lib/registration";
 import { ScanDialog } from "../scan-dialog";
 import { AccountPage, initials } from "./account-page";
-import { AlertsWelcome } from "./alerts-welcome";
+import { AlertsWelcome, LocationWelcome } from "./alerts-welcome";
+import { useLocation } from "./use-location";
 import { usePush } from "./use-push";
 import { CardDetail } from "./card-detail";
 import { CardList } from "./card-list";
@@ -41,10 +42,15 @@ export function Wallet({ customer, initialCards, joinId, cardId }: {
   cardId: string | null;
 }) {
   const { isAuthenticated } = useConvexAuth();
+  const liveViewer = useQuery(api.users.viewer, isAuthenticated ? {} : "skip");
+  const liveCustomer: Customer = liveViewer?.role === "client"
+    ? { name: liveViewer.name, email: liveViewer.email, phone: liveViewer.phone }
+    : customer;
   // The server's copy shows at once; the live one takes over so new stamps appear by themselves.
   const cards = useQuery(api.clients.memberships.mine, isAuthenticated ? {} : "skip") ?? initialCards;
   const join = useMutation(api.clients.memberships.join);
   const push = usePush();
+  const location = useLocation();
   const leave = useMutation(api.clients.memberships.leave);
   const [view, setView] = useState<View>("cards");
   // The open card, and where it sat in the list if it was opened from there.
@@ -225,8 +231,8 @@ export function Wallet({ customer, initialCards, joinId, cardId }: {
         </nav>
         <InstallApp className="wallet-sidebar-install" />
         <div className="wallet-user">
-          <span className="wallet-avatar" aria-hidden="true">{initials(customer.name)}</span>
-          <div><strong>{customer.name}</strong><span>{formatPhone(customer.phone)}</span></div>
+          <span className="wallet-avatar" aria-hidden="true">{initials(liveCustomer.name)}</span>
+          <div><strong>{liveCustomer.name}</strong><span>{formatPhone(liveCustomer.phone)}</span></div>
         </div>
       </aside>
 
@@ -234,21 +240,21 @@ export function Wallet({ customer, initialCards, joinId, cardId }: {
         <Link href="/" className="wallet-brand" aria-label="Maat, inicio"><Brand /></Link>
         <InstallApp className="wallet-topbar-install" />
         <button type="button" className="wallet-topbar-account" onClick={() => changeView("account")} aria-label="Abrir mi cuenta">
-          <span className="wallet-avatar" aria-hidden="true">{initials(customer.name)}</span>
+          <span className="wallet-avatar" aria-hidden="true">{initials(liveCustomer.name)}</span>
         </button>
       </header>
 
       <main ref={main} className="wallet-main">
         {/* The list stays mounted behind an open card, ready for the card's way back. */}
         <div ref={listView} className="wallet-view" hidden={view !== "cards" || Boolean(openedCard)}>
-          <CardList cards={cards} name={customer.name} onOpen={openCard} onAdd={() => setScanning(true)} />
+          <CardList cards={cards} name={liveCustomer.name} onOpen={openCard} onAdd={() => setScanning(true)} />
         </div>
         {view === "cards" && openedCard && (
-          <CardDetail key={openedCard.membershipId} card={openedCard} from={open?.from} member={customer.name} push={push}
+          <CardDetail key={openedCard.membershipId} card={openedCard} from={open?.from} member={liveCustomer.name} push={push}
             onBack={closeCard} onShowQr={() => setQrId(openedCard.membershipId)} onLeave={() => leaveCard(openedCard)} />
         )}
         {view === "rewards" && <div className="wallet-view"><RewardsPage cards={cards} onShowQr={setQrId} /></div>}
-        {view === "account" && <div className="wallet-view"><AccountPage customer={customer} cards={cards} push={push} /></div>}
+        {view === "account" && <div className="wallet-view"><AccountPage customer={liveCustomer} cards={cards} push={push} location={location} /></div>}
       </main>
 
       <nav className="wallet-tabs" aria-label="Secciones">
@@ -269,6 +275,7 @@ export function Wallet({ customer, initialCards, joinId, cardId }: {
           return null;
         }} />
       <AlertsWelcome push={push} quiet={scanning || qrId !== undefined} />
+      <LocationWelcome location={location} push={push} quiet={scanning || qrId !== undefined || cards.length === 0} />
       <QrDialog card={cards.find((card) => card.membershipId === qrId)} customer={customer} onClose={() => setQrId(undefined)} />
 
       <div className="wallet-toast-region" role="status">

@@ -3,7 +3,7 @@ import { randomMemberCode } from "../../lib/member-code";
 import { mutation, query } from "../_generated/server";
 import { currentClient } from "./currentClient";
 import { countToday } from "../dailyStats";
-import { cardDesign } from "../organizations";
+import { cardDesign, isOrganizationActive } from "../organizations";
 import { latestRedemptions } from "../redemptions";
 
 /** The signed-in customer's cards, newest first, each with its business's current design. */
@@ -49,8 +49,12 @@ export const join = mutation({
   handler: async (ctx, args) => {
     const user = await currentClient(ctx);
     const organizationId = ctx.db.normalizeId("organizations", args.organizationId);
-    if (!organizationId || !await ctx.db.get("organizations", organizationId)) {
+    const organization = organizationId && await ctx.db.get("organizations", organizationId);
+    if (!organizationId || !organization) {
       throw new ConvexError("Este código QR no corresponde a un negocio en Maat.");
+    }
+    if (!isOrganizationActive(organization)) {
+      throw new ConvexError("Este negocio no está activo en este momento.");
     }
 
     // Convex mutations are transactions, so two quick scans can't create two cards.

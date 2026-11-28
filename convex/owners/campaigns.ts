@@ -1,6 +1,10 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { cardProgress } from "../../lib/card-progress";
+import {
+  defaultProximityCooldownDays, defaultProximityRadiusMeters, distanceMeters, isValidCoordinates,
+  maxProximityCooldownDays, maxProximityRadiusMeters, minProximityCooldownDays, minProximityRadiusMeters,
+} from "../../lib/geo";
 import { isPrizeId, randomPrizeId } from "../../lib/prizes";
 import {
   audienceProblem, defaultSendHour, firstSendHour, inAudience, lastSendHour, maxRules,
@@ -10,7 +14,7 @@ import { dayKey, daysBetween, hourOf, timeAt } from "../../lib/stamp-day";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, query, type QueryCtx } from "../_generated/server";
-import { cardOf } from "../organizations";
+import { cardOf, isOrganizationActive } from "../organizations";
 import { audience, reminderRule } from "../reminderModel";
 import { batchSize, dailyLimitsOff, daysAway, devicesFor } from "../reminderSend";
 
@@ -24,6 +28,9 @@ async function ownedBusiness(ctx: QueryCtx) {
   if (!user || user.account.role !== "owner") throw new ConvexError("Solo el dueño puede manejar los avisos.");
   const organization = await ctx.db.get("organizations", user.account.organizationId);
   if (!organization) throw new ConvexError("No se encontró el negocio de tu cuenta.");
+  if (!isOrganizationActive(organization)) {
+    throw new ConvexError("Tu cuenta de negocio está desactivada.");
+  }
   return { userId: user._id, organization };
 }
 
@@ -61,7 +68,19 @@ export const overview = query({
 
     const { followed, partial } = await followedCards(ctx, organization._id);
     let reachable = 0;
-    for (const membership of followed) if ((await devicesFor(ctx, membership)).length) reachable++;
+    let sharedLocation = 0;
+    let nearbyNow = 0;
+    const activeRadius = organization.proximityAlert?.radiusMeters ?? defaultProximityRadiusMeters;
+    for (const membership of followed) {
+      if ((await devicesFor(ctx, membership)).length) reachable++;
+      const customer = await ctx.db.get("users", membership.clientId);
+      if (customer?.lastLocation) {
+        sharedLocation++;
+        if (organization.location && distanceMeters(organization.location, customer.lastLocation) <= activeRadius) {
+          nearbyNow++;
+        }
+      }
+    }
 
     const since = now - statsDays * 86_400_000;
     const recent = await ctx.db.query("notificationLog")
@@ -78,6 +97,10 @@ export const overview = query({
       businessName: card.displayName,
       card,
       dailyLimitsOff: dailyLimitsOff(),
+      location: organization.location ?? null,
+      proximityAlert: organization.proximityAlert ?? null,
+      locationReach: { shared: sharedLocation, nearby: nearbyNow },
+      proximityStats: tally(recent.filter((entry) => entry.proximity === true)),
       sendHour: plan?.sendHour ?? defaultSendHour,
       rules: (plan?.rules ?? []).map((rule) => ({
         ...rule, stats: tally(recent.filter((entry) => entry.ruleId === rule.id)),
@@ -114,17 +137,98 @@ export const preview = query({
     const card = cardOf(organization);
     const { followed, partial } = await followedCards(ctx, organization._id);
     const today = dayKey(now);
+    const nearbyRadius = audience.radiusMeters ?? organization.proximityAlert?.radiusMeters ?? defaultProximityRadiusMeters;
     let matched = 0;
     let reachable = 0;
     for (const membership of followed) {
-      const progress = cardProgress(card, membership.stamps, membership.redeemedPrizes);
-      const away = daysAway(membership, today);
-      if (!inAudience(audience, progress, away)) continue;
-      if (reminderDays !== undefined && (away === null || away < reminderDays)) continue;
+      if (audience.type === "nearby") {
+        if (!organization.location) continue;
+        const customer = await ctx.db.get("users", membership.clientId);
+        if (!customer?.lastLocation) continue;
+        if (distanceMeters(organization.location, customer.lastLocation) > nearbyRadius) continue;
+      } else {
+        const progress = cardProgress(card, membership.stamps, membership.redeemedPrizes);
+        const away = daysAway(membership, today);
+        if (!inAudience(audience, progress, away)) continue;
+        if (reminderDays !== undefined && (away === null || away < reminderDays)) continue;
+      }
       matched++;
       if ((await devicesFor(ctx, membership)).length) reachable++;
     }
     return { matched, reachable, partial };
+  },
+});
+
+/** Saves the business location and automatic proximity notification configuration. */
+export const saveProximitySettings = mutation({
+  args: {
+    location: v.optional(v.union(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        label: v.optional(v.string()),
+      }),
+      v.null(),
+    )),
+    proximityAlert: v.object({
+      enabled: v.boolean(),
+      radiusMeters: v.number(),
+      cooldownDays: v.number(),
+      message: v.string(),
+    }),
+  },
+  handler: async (ctx, { location, proximityAlert }) => {
+    const { organization } = await ownedBusiness(ctx);
+
+    let nextLocation = organization.location;
+    if (location === null) {
+      nextLocation = undefined;
+    } else if (location !== undefined) {
+      if (!isValidCoordinates(location.lat, location.lng)) {
+        throw new ConvexError("Las coordenadas de ubicación no son válidas.");
+      }
+      const trimmedLabel = location.label?.trim();
+      if (trimmedLabel && trimmedLabel.length > 120) {
+        throw new ConvexError("El nombre de la ubicación puede tener máximo 120 caracteres.");
+      }
+      nextLocation = {
+        lat: Number(location.lat.toFixed(6)),
+        lng: Number(location.lng.toFixed(6)),
+        ...(trimmedLabel ? { label: trimmedLabel } : {}),
+      };
+    }
+
+    const radiusMeters = Math.round(proximityAlert.radiusMeters);
+    if (!Number.isInteger(radiusMeters) || radiusMeters < minProximityRadiusMeters || radiusMeters > maxProximityRadiusMeters) {
+      throw new ConvexError(`El radio va de ${minProximityRadiusMeters} m a ${maxProximityRadiusMeters} m.`);
+    }
+    const cooldownDays = Math.round(proximityAlert.cooldownDays);
+    if (!Number.isInteger(cooldownDays) || cooldownDays < minProximityCooldownDays || cooldownDays > maxProximityCooldownDays) {
+      throw new ConvexError(`La espera entre avisos va de ${minProximityCooldownDays} a ${maxProximityCooldownDays} días.`);
+    }
+
+    const trimmedMessage = proximityAlert.message.trim();
+    if (proximityAlert.enabled) {
+      if (!nextLocation) {
+        throw new ConvexError("Primero guarda la ubicación de tu negocio para activar los avisos por cercanía.");
+      }
+      const problem = messageProblem(trimmedMessage, "nearby");
+      if (problem) throw new ConvexError(problem);
+    } else if (trimmedMessage) {
+      const problem = messageProblem(trimmedMessage, "nearby");
+      if (problem) throw new ConvexError(problem);
+    }
+
+    await ctx.db.patch("organizations", organization._id, {
+      location: nextLocation,
+      proximityAlert: {
+        enabled: proximityAlert.enabled,
+        radiusMeters: radiusMeters || defaultProximityRadiusMeters,
+        cooldownDays: cooldownDays || defaultProximityCooldownDays,
+        message: trimmedMessage,
+      },
+    });
+    return null;
   },
 });
 
@@ -174,6 +278,9 @@ export const sendCampaign = mutation({
     const { userId, organization } = await ownedBusiness(ctx);
     const problem = audienceProblem(audience) ?? messageProblem(message, audience.type);
     if (problem) throw new ConvexError(problem);
+    if (audience.type === "nearby" && !organization.location) {
+      throw new ConvexError("Primero guarda la ubicación de tu negocio para avisar a clientes cercanos.");
+    }
     if (!process.env.VAPID_PRIVATE_KEY) throw new ConvexError("Los avisos todavía no están configurados.");
 
     const now = Date.now();

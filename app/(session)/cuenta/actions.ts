@@ -26,6 +26,7 @@ export async function saveAccountCard(details: CardDetails, form: FormData) {
     if (cardImageSlots.some((slot) => form.get(slot) instanceof File)) {
       const viewer = await fetchQuery(api.users.viewer, {}, { token });
       if (viewer?.role !== "owner") return "Solo el dueño puede editar la tarjeta.";
+      if (!viewer.active) return "Tu cuenta de negocio está desactivada.";
     }
     for (const slot of cardImageSlots) {
       const value = form.get(slot);
