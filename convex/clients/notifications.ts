@@ -36,7 +36,7 @@ export const status = query({
   handler: async (ctx, { endpoint }) => {
     const user = await currentClient(ctx);
     const device = endpoint ? await deviceAt(ctx, endpoint) : null;
-    const mine = device?.userId === user._id ? device : null;
+    const mine = device?.userId === user._id && device.signedOutAt === undefined ? device : null;
     const muted = await ctx.db.query("mutedCards").withIndex("by_user", (q) => q.eq("userId", user._id)).collect();
     return {
       userKey: user._id,
@@ -58,7 +58,7 @@ export const subscribe = mutation({
     // A device belongs to whoever turned notifications on last, so a shared phone gets only theirs.
     const existing = await deviceAt(ctx, endpoint);
     if (existing?.userId === user._id) {
-      await ctx.db.patch("pushSubscriptions", existing._id, { p256dh, auth });
+      await ctx.db.patch("pushSubscriptions", existing._id, { p256dh, auth, signedOutAt: undefined });
       return null;
     }
     if (existing) await ctx.db.delete("pushSubscriptions", existing._id);
@@ -77,6 +77,19 @@ export const unsubscribe = mutation({
     const user = await currentClient(ctx);
     const device = await deviceAt(ctx, endpoint);
     if (device?.userId === user._id) await ctx.db.delete("pushSubscriptions", device._id);
+    return null;
+  },
+});
+
+/** Marks this device signed out so normal alerts pause, while keeping it reachable for password reset OTP. */
+export const markSignedOut = mutation({
+  args: { endpoint: v.string() },
+  handler: async (ctx, { endpoint }) => {
+    const user = await currentClient(ctx);
+    const device = await deviceAt(ctx, endpoint);
+    if (device?.userId === user._id) {
+      await ctx.db.patch("pushSubscriptions", device._id, { signedOutAt: Date.now() });
+    }
     return null;
   },
 });

@@ -31,7 +31,8 @@ export async function devicesFor(ctx: QueryCtx, membership: Doc<"memberships">) 
     .withIndex("by_membership", (q) => q.eq("membershipId", membership._id))
     .first();
   if (muted) return [];
-  return ctx.db.query("pushSubscriptions").withIndex("by_user", (q) => q.eq("userId", membership.clientId)).take(deviceLimit);
+  const devices = await ctx.db.query("pushSubscriptions").withIndex("by_user", (q) => q.eq("userId", membership.clientId)).take(deviceLimit);
+  return devices.filter((device) => device.signedOutAt === undefined);
 }
 
 /** The card's latest notifications, newest first. */

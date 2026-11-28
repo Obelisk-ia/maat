@@ -62,6 +62,7 @@ export function usePush() {
   const status = latest ?? kept;
   const subscribe = useMutation(api.clients.notifications.subscribe);
   const unsubscribe = useMutation(api.clients.notifications.unsubscribe);
+  const markSignedOut = useMutation(api.clients.notifications.markSignedOut);
   const setCardMuted = useMutation(api.clients.notifications.setCardMuted);
   const requestTest = useMutation(api.clients.notifications.sendTest);
   const [busy, setBusy] = useState(false);
@@ -238,13 +239,16 @@ export function usePush() {
       }, "No pudimos enviar el aviso de prueba. Intenta de nuevo.");
     },
 
-    /** Before signing out, so this phone stops getting the account's notifications. */
+    /** Before signing out: pauses normal alerts while keeping the trusted device reachable for password reset OTP. */
     forgetDevice: async () => {
       // Not a choice to switch them off: signing in again turns them back on.
       connectedAlone.current = true;
       if (!device?.endpoint) return;
       // Signing out never waits long for a phone that doesn't answer.
-      await Promise.race([disconnect().catch(() => {}), new Promise((resolve) => setTimeout(resolve, 4000))]);
+      await Promise.race([
+        markSignedOut({ endpoint: device.endpoint }).catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, 4000)),
+      ]);
     },
   };
 }
