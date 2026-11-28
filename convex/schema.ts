@@ -108,6 +108,8 @@ export default defineSchema({
     p256dh: v.string(),
     auth: v.string(),
     lastTestAt: v.optional(v.number()),
+    // Set on sign-out: pauses normal card/campaign notifications while keeping the trusted device reachable for password reset OTP.
+    signedOutAt: v.optional(v.number()),
     // How the push service answered the latest notification.
     lastResult: v.optional(v.object({ at: v.number(), ok: v.boolean(), status: v.optional(v.number()) })),
   })
