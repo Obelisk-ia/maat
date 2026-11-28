@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { Composer } from "./composer";
 import { History } from "./history";
+import { ProximitySection } from "./proximity-section";
 import { RemindersForm } from "./reminders-form";
 import "./campaigns.css";
 
@@ -52,6 +53,7 @@ export function Campaigns() {
             <span>Los demás no los han permitido en su teléfono o los apagaron.</span>
           </p>
           <RemindersForm data={data} now={now} />
+          <ProximitySection data={data} />
           <Composer data={data} now={now} />
           <History data={data} />
         </div>

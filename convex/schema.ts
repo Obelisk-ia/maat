@@ -14,14 +14,41 @@ export default defineSchema({
       v.object({ role: v.literal("owner"), organizationId: v.id("organizations") }),
       v.object({ role: v.literal("staff"), organizationId: v.id("organizations") }),
       v.object({ role: v.literal("client"), phone: v.string() }),
+      v.object({ role: v.literal("admin") }),
     ),
+    // Last location voluntarily shared by a customer for proximity alerts & nearby campaigns.
+    lastLocation: v.optional(v.object({
+      lat: v.number(),
+      lng: v.number(),
+      updatedAt: v.number(),
+    })),
   })
     .index("email", ["email"])
     .index("phone", ["phone"])
-    .index("by_client_phone", ["account.phone"]),
+    .index("by_client_phone", ["account.phone"])
+    .index("by_organization", ["account.organizationId"]),
   organizations: defineTable({
     name: v.string(),
     inviteCode: v.string(),
+    // Missing on organizations created before admin approval existed (treated as active).
+    // New owner signups start inactive until an admin enables them.
+    active: v.optional(v.boolean()),
+    // Admin-only billing tracking (30-day cycles).
+    lastPaidAt: v.optional(v.number()),
+    nextPaymentDueAt: v.optional(v.number()),
+    paymentCount: v.optional(v.number()),
+    // Business physical location and proximity push alert configuration.
+    location: v.optional(v.object({
+      lat: v.number(),
+      lng: v.number(),
+      label: v.optional(v.string()),
+    })),
+    proximityAlert: v.optional(v.object({
+      enabled: v.boolean(),
+      radiusMeters: v.number(),
+      cooldownDays: v.number(),
+      message: v.string(),
+    })),
     card: v.optional(v.object({
       details: cardDetails,
       logoId: v.optional(v.id("_storage")),
@@ -126,6 +153,8 @@ export default defineSchema({
     // The visit the customer had last, so a reminder goes once until they come back.
     absence: v.optional(v.number()),
     campaignId: v.optional(v.id("campaigns")),
+    // Set when triggered automatically because the customer was near the business.
+    proximity: v.optional(v.boolean()),
     devices: v.number(),
     failures: v.number(),
     // Whether a push service took it. Missing while it's on its way.
@@ -146,4 +175,28 @@ export default defineSchema({
     // Prizes delivered. Missing on days saved before redemption existed.
     rewards: v.optional(v.number()),
   }).index("by_organization_and_day", ["organizationId", "day"]),
+  // Admin-only history of confirmed monthly payments per business.
+  organizationPayments: defineTable({
+    organizationId: v.id("organizations"),
+    recordedBy: v.id("users"),
+    paidAt: v.number(),
+    nextDueAt: v.number(),
+    note: v.optional(v.string()),
+  }).index("by_organization", ["organizationId"]),
+  // Short-lived (15 min) hashed one-time password reset codes (push OTP, admin, or owner->staff).
+  passwordResetCodes: defineTable({
+    userId: v.id("users"),
+    codeHash: v.string(),
+    source: v.union(v.literal("push"), v.literal("admin"), v.literal("owner")),
+    issuedBy: v.optional(v.id("users")),
+    expiresAt: v.number(),
+    attempts: v.number(),
+    usedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+  // Single-use hashed backup recovery codes (6 per user) exported in their recovery PDF.
+  recoveryCodes: defineTable({
+    userId: v.id("users"),
+    codeHash: v.string(),
+    usedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
 });

@@ -9,8 +9,10 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
 import { addDays } from "@/lib/dashboard-periods";
+import { defaultProximityRadiusMeters, formatDistance, proximityRadiusOptions } from "@/lib/geo";
 import {
   audienceLabels, audienceProblem, firstSendHour, lastSendHour, messageProblem, placeholdersFor,
   scheduleLimitDays, type AudienceType,
@@ -45,6 +47,9 @@ export function Composer({ data, now }: { data: Overview; now: number }) {
   const [type, setType] = useState<AudienceType>("all");
   const [stamps, setStamps] = useState(2);
   const [days, setDays] = useState(30);
+  const [radiusMeters, setRadiusMeters] = useState(
+    () => data.proximityAlert?.radiusMeters ?? defaultProximityRadiusMeters,
+  );
   const [message, setMessage] = useState("");
   // Until the owner chooses, a message written at night is set to go out later.
   const [later, setLater] = useState<boolean>();
@@ -55,7 +60,8 @@ export function Composer({ data, now }: { data: Overview; now: number }) {
   const [status, setStatus] = useState<{ text: string; error?: boolean }>();
   const scheduled = later ?? atNight;
   const lateNow = atNight && !scheduled;
-  const audience = { type, stamps, days };
+  const audience = type === "nearby" ? { type, stamps, days, radiusMeters } : { type, stamps, days };
+  const missingLocation = type === "nearby" && !data.location;
 
   function chooseType(next: AudienceType) {
     setType(next);
@@ -102,12 +108,34 @@ export function Composer({ data, now }: { data: Overview; now: number }) {
           </Button>
         ))}
       </div>
-      {(type === "near" || type === "inactive") && (
+      {(type === "near" || type === "inactive" || type === "nearby") && (
         <div className="campaign-numbers">
-          {type === "near"
-            ? <NumberField label="Le faltan estos sellos o menos" value={stamps} max={99} onChange={setStamps} />
-            : <NumberField label="Días sin venir" value={days} max={365} onChange={setDays} />}
+          {type === "near" && (
+            <NumberField label="Le faltan estos sellos o menos" value={stamps} max={99} onChange={setStamps} />
+          )}
+          {type === "inactive" && (
+            <NumberField label="Días sin venir" value={days} max={365} onChange={setDays} />
+          )}
+          {type === "nearby" && (
+            <div className="campaign-field">
+              <Label htmlFor="composer-nearby-radius">Distancia máxima</Label>
+              <select
+                id="composer-nearby-radius"
+                value={radiusMeters}
+                onChange={(event) => setRadiusMeters(Number(event.target.value))}
+              >
+                {proximityRadiusOptions.map((option) => (
+                  <option key={option} value={option}>{formatDistance(option)}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
+      )}
+      {missingLocation && (
+        <p className="campaign-night" role="status">
+          Primero guarda la ubicación de tu negocio en la sección «Ubicación y avisos por cercanía» de arriba.
+        </p>
       )}
       <div className="campaign-compose">
         <MessageField type={type} value={message} onChange={(value) => { setMessage(value); setStatus(undefined); }} />
@@ -141,7 +169,7 @@ export function Composer({ data, now }: { data: Overview; now: number }) {
       {lateNow && <NightWarning now={now} />}
 
       <div className="campaign-actions">
-        <Button type="button" disabled={!message.trim() || sending} onClick={review}>
+        <Button type="button" disabled={!message.trim() || sending || missingLocation} onClick={review}>
           <Send aria-hidden="true" /> {scheduled ? "Programar aviso" : "Enviar aviso"}
         </Button>
       </div>

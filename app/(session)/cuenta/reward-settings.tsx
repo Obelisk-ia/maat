@@ -4,6 +4,8 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
+import { ChangePasswordDialog } from "./change-password-dialog";
+import { RecoveryKitDialog } from "./recovery-kit-dialog";
 import "./reward-settings.css";
 
 export function RewardSettings() {
@@ -63,6 +65,24 @@ export function RewardSettings() {
           </>
         )}
         <p className="settings-status" data-error={Boolean(status?.error)} role="status">{status?.text}</p>
+      </section>
+
+      <section className="settings-panel mt-5" aria-labelledby="owner-security-title">
+        <h2 id="owner-security-title">Seguridad</h2>
+        <div className="settings-row">
+          <div>
+            <strong>Contraseña de tu cuenta</strong>
+            <span>Al cambiarla, se cerrarán tus otras sesiones activas.</span>
+          </div>
+          <ChangePasswordDialog variant="outline" size="sm" />
+        </div>
+        <div className="settings-row">
+          <div>
+            <strong>Kit de recuperación (PDF)</strong>
+            <span>Genera 6 códigos de respaldo de un solo uso y descárgalos en PDF por si olvidas tu contraseña.</span>
+          </div>
+          <RecoveryKitDialog variant="outline" size="sm" />
+        </div>
       </section>
     </>
   );

@@ -56,7 +56,7 @@ export async function sendToCard(
   ctx: MutationCtx,
   membership: Doc<"memberships">,
   message: { title: string; body: string },
-  reason: Partial<Pick<Doc<"notificationLog">, "ruleId" | "ruleType" | "ruleDays" | "absence" | "campaignId">>,
+  reason: Partial<Pick<Doc<"notificationLog">, "ruleId" | "ruleType" | "ruleDays" | "absence" | "campaignId" | "proximity">>,
   log: Doc<"notificationLog">[],
   devices: Doc<"pushSubscriptions">[],
 ) {

@@ -2,16 +2,20 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isOrganizationActive } from "../organizations";
 
 /** Only a business's owner and staff may serve its customers, and only their own business's. */
 export async function currentStamper(ctx: QueryCtx) {
   const userId = await getAuthUserId(ctx);
   const user = userId && await ctx.db.get("users", userId);
-  if (!user || user.account.role === "client") {
+  if (!user || (user.account.role !== "owner" && user.account.role !== "staff")) {
     throw new ConvexError("Solo el equipo del negocio puede registrar sellos.");
   }
   const organization = await ctx.db.get("organizations", user.account.organizationId);
   if (!organization) throw new ConvexError("No se encontró el negocio de tu cuenta.");
+  if (!isOrganizationActive(organization)) {
+    throw new ConvexError("La cuenta de este negocio está desactivada.");
+  }
   return { staffId: user._id, staffName: user.name, role: user.account.role, organization };
 }
 

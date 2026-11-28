@@ -5,7 +5,29 @@ import { withPrizeIds } from "../lib/prizes";
 import { normalizePhone } from "../lib/registration";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, query } from "./_generated/server";
-import { findByInviteCode, formatInviteCode, generateInviteCode } from "./organizations";
+import { findByInviteCode, formatInviteCode, generateInviteCode, isOrganizationActive } from "./organizations";
+
+export const createAdminUser = internalMutation({
+  args: {
+    email: v.string(),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const name = args.name.trim();
+    if (name.length < 2 || name.length > 100) {
+      throw new ConvexError("Escribe un nombre de 2 a 100 caracteres.");
+    }
+    const existing = await ctx.db.query("users").withIndex("email", (q) => q.eq("email", args.email)).first();
+    if (existing) {
+      throw new ConvexError("Ese correo ya tiene una cuenta.");
+    }
+    return await ctx.db.insert("users", {
+      name,
+      email: args.email,
+      account: { role: "admin" },
+    });
+  },
+});
 
 export const createUser = internalMutation({
   args: {
@@ -32,6 +54,7 @@ export const createUser = internalMutation({
         const organizationId = await ctx.db.insert("organizations", {
           name: businessName,
           inviteCode: await generateInviteCode(ctx),
+          active: false,
         });
         account = { role: "owner", organizationId };
         break;
@@ -70,17 +93,22 @@ export const viewer = query({
     if (!user) return null;
 
     const { name, email, account } = user;
+    if (account.role === "admin") {
+      return { name, email, role: account.role };
+    }
     if (account.role === "client") {
       return { name, email, role: account.role, phone: account.phone };
     }
 
     const organization = await ctx.db.get("organizations", account.organizationId);
     if (!organization) throw new ConvexError("No se encontró el negocio de tu cuenta.");
+    const active = isOrganizationActive(organization);
     if (account.role === "staff") {
-      return { name, email, role: account.role, businessName: organization.name };
+      return { name, email, role: account.role, businessName: organization.name, active };
     }
     return {
       name, email, role: account.role, businessName: organization.name,
+      active,
       organizationId: organization._id,
       inviteCode: organization.inviteCode,
       card: organization.card ? withPrizeIds(organization.card.details) : null,

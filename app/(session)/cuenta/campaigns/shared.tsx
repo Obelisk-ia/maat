@@ -8,6 +8,7 @@ import { useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
+import { defaultProximityRadiusMeters, formatDistance } from "@/lib/geo";
 import {
   audienceLabels, firstSendHour, lastSendHour, messageLimit, messageValues, placeholdersFor, renderMessage,
   type Audience, type AudienceType, type Placeholder,
@@ -19,9 +20,10 @@ export type Overview = FunctionReturnType<typeof api.owners.campaigns.overview>;
 export const hours = Array.from({ length: lastSendHour - firstSendHour + 1 }, (_, index) => firstSendHour + index);
 export const hourText = (hour: number) => `${hour}:00`;
 
-export function audienceText({ type, stamps, days }: Audience) {
+export function audienceText({ type, stamps, days, radiusMeters }: Audience) {
   if (type === "near") return `A ${stamps} ${stamps === 1 ? "sello" : "sellos"} o menos de un premio`;
   if (type === "inactive") return `Sin venir hace ${days} ${days === 1 ? "día" : "días"} o más`;
+  if (type === "nearby") return `Clientes a ${formatDistance(radiusMeters ?? defaultProximityRadiusMeters)} o menos`;
   return audienceLabels[type];
 }
 

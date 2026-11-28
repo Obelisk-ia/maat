@@ -5,7 +5,7 @@ import { addDays, periodRange, sumDays } from "../../lib/dashboard-periods";
 import { dayKey } from "../../lib/stamp-day";
 import type { Doc } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { cardOf } from "../organizations";
+import { cardOf, isOrganizationActive } from "../organizations";
 
 // Most cards read at once. Past this, the dashboard says its customer figures are partial.
 const cardLimit = 5000;
@@ -18,6 +18,9 @@ async function ownedBusiness(ctx: QueryCtx) {
   if (!user || user.account.role !== "owner") throw new ConvexError("Solo el dueño puede ver el dashboard.");
   const organization = await ctx.db.get("organizations", user.account.organizationId);
   if (!organization) throw new ConvexError("No se encontró el negocio de tu cuenta.");
+  if (!isOrganizationActive(organization)) {
+    throw new ConvexError("Tu cuenta de negocio está desactivada.");
+  }
   return { organization, card: cardOf(organization) };
 }
 

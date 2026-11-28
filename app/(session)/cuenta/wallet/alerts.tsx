@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, BellRing } from "lucide-react";
+import { Bell, BellRing, MapPin } from "lucide-react";
 import Link from "next/link";
 import { PushHelp } from "@/components/pwa/push-help";
 import { CardLogo } from "./card-logo";
 import type { WalletCard } from "./types";
+import type { CustomerLocation } from "./use-location";
 import type { Push } from "./use-push";
 
 function Switch({ label, checked, disabled, onChange }: {
@@ -161,6 +162,58 @@ export function AlertSettings({ push, cards }: { push: Push; cards: WalletCard[]
       <Problem push={push} />
       <Trouble push={push} />
       {!push.trouble && <Link href="/diagnostico" className="wallet-check-link">Revisar este teléfono</Link>}
+    </section>
+  );
+}
+
+/** On the account page: opt-in location sharing for nearby business notifications. */
+export function LocationSettings({ location }: { location: CustomerLocation }) {
+  if (location.state === "loading") return null;
+  const on = location.state === "on";
+  return (
+    <section aria-labelledby="account-location">
+      <h2 id="account-location">Avisos por cercanía</h2>
+      {location.state === "unsupported" && (
+        <p className="wallet-help">Este navegador no puede compartir tu ubicación.</p>
+      )}
+      {location.state === "blocked" && (
+        <p className="wallet-help">
+          El permiso de ubicación está bloqueado para Maat en este teléfono. Actívalo en los ajustes de tu navegador
+          si quieres recibir avisos cuando estés cerca de tus negocios.
+        </p>
+      )}
+      {location.state === "ask" && (
+        <>
+          <p className="wallet-help">
+            Comparte tu ubicación para recibir avisos especiales cuando pases cerca de los negocios que sigues.
+          </p>
+          <div>
+            <button type="button" className="wallet-btn" disabled={location.busy} onClick={() => void location.enable()}>
+              <MapPin aria-hidden="true" /> {location.busy ? "Activando…" : "Permitir ubicación"}
+            </button>
+          </div>
+        </>
+      )}
+      {(on || location.state === "off") && (
+        <>
+          <div className="wallet-switch-row">
+            <div>
+              <strong>Ubicación en este teléfono</strong>
+              <span>{on ? "Activada para avisos cercanos" : "Apagada"}</span>
+            </div>
+            <Switch
+              label="Ubicación para avisos cercanos"
+              checked={on}
+              disabled={location.busy}
+              onChange={(checked) => void (checked ? location.enable() : location.disable())}
+            />
+          </div>
+          <p className="wallet-help">
+            Solo se usa mientras abres Maat para avisarte si estás cerca de un negocio que sigues.
+          </p>
+        </>
+      )}
+      {location.error && <p className="wallet-error" role="alert">{location.error}</p>}
     </section>
   );
 }
