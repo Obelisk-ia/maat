@@ -50,7 +50,7 @@
   align-items: center;
   gap: 12px;
   min-height: 58px;
-  padding: 8px clamp(16px, 3vw, 44px);
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) clamp(16px, 3vw, 44px) 8px;
   border-bottom: 1px solid var(--sidebar-border);
   background: #e9e3d9;
   font-size: 14px;

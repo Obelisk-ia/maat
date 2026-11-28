@@ -1,6 +1,13 @@
-// How this browser can put the site on the home screen, judged from what it says about itself.
+// How this browser can put the site on the home screen or desktop, judged from what it says about itself.
 
-export type InstallGuide = "ios" | "ios-inapp" | "android" | "android-inapp" | null;
+export type InstallGuide =
+  | "ios"
+  | "ios-inapp"
+  | "android"
+  | "android-inapp"
+  | "desktop-safari"
+  | "desktop-chromium"
+  | null;
 
 // Browsers inside other apps, which can't add anything to the home screen.
 const inAppBrowsers = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|Snapchat|Twitter|GSA\//;
@@ -18,6 +25,12 @@ export function installGuide({ userAgent, platform, maxTouchPoints }: {
   if (/Android/.test(userAgent)) {
     return inAppBrowsers.test(userAgent) || /; wv\)/.test(userAgent) ? "android-inapp" : "android";
   }
-  // On a computer, only a browser that offers its own install prompt gets the button.
+  // Desktop browsers: macOS Safari (Add to Dock) and Chromium browsers (Chrome, Edge, Brave, Opera).
+  if (/Safari\//.test(userAgent) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(userAgent)) {
+    return "desktop-safari";
+  }
+  if (/Chrome\/|Chromium\/|Edg\/|OPR\//.test(userAgent)) {
+    return "desktop-chromium";
+  }
   return null;
 }

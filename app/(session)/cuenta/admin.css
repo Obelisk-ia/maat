@@ -409,7 +409,7 @@
     border: 0;
   }
 
-  .admin-bar button > span {
+  .admin-bar button:not(.install-app) > span {
     position: absolute;
     width: 1px;
     height: 1px;
