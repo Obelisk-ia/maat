@@ -306,6 +306,11 @@ export function AuthForm({ mode, initialRole, businessId }: {
           <Link href={signup ? "/clientes" : "/clientes?tab=login"}>Acceso para clientes</Link>
         </div>
       )}
+      {client && (
+        <div className="quick-links">
+          <Link href="/auth?tab=login">¿Tienes un negocio? Acceso dueño / staff</Link>
+        </div>
+      )}
     </>
   );
 

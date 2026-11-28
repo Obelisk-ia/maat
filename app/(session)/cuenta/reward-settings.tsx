@@ -3,6 +3,7 @@
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
+import { InstallApp, useInstallState } from "@/components/pwa/install-app";
 import { api } from "@/convex/_generated/api";
 import { ChangePasswordDialog } from "./change-password-dialog";
 import { RecoveryKitDialog } from "./recovery-kit-dialog";
@@ -12,6 +13,7 @@ export function RewardSettings() {
   const { isAuthenticated } = useConvexAuth();
   const settings = useQuery(api.owners.settings.rewardSettings, isAuthenticated ? {} : "skip");
   const save = useMutation(api.owners.settings.setRestartAfterFinalPrize);
+  const install = useInstallState();
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean }>();
   const on = settings?.restartAfterFinalPrize;
@@ -84,6 +86,23 @@ export function RewardSettings() {
           <RecoveryKitDialog variant="outline" size="sm" />
         </div>
       </section>
+
+      {install !== "none" && (
+        <section className="settings-panel mt-5" aria-labelledby="owner-app-title">
+          <h2 id="owner-app-title">App Maat</h2>
+          <div className="settings-row">
+            <div>
+              <strong>{install === "app" ? "App instalada" : "Instala Maat en este dispositivo"}</strong>
+              <span>
+                {install === "app"
+                  ? "Estás usando Maat como aplicación instalada."
+                  : "Ábrela directo desde tu pantalla de inicio, tablet o computadora."}
+              </span>
+            </div>
+            {install !== "app" && <InstallApp label="Instalar app" />}
+          </div>
+        </section>
+      )}
     </>
   );
 }

@@ -45,6 +45,24 @@ const guides: Record<Guide, { description: string; steps: ReactNode[]; note?: st
     steps: [<>Copia el enlace.</>, <>Ábrelo en el <b>navegador</b> de tu teléfono.</>, <>Ahí toca <b>Instalar</b> o <b>Agregar a inicio</b>.</>],
     copyLink: true,
   },
+  "desktop-safari": {
+    description: "Agrega Maat a tu Mac para abrirla como aplicación.",
+    steps: [
+      <>En la barra superior de Safari, abre <b>Archivo</b> (o toca <b>Compartir</b> <Share aria-hidden="true" />).</>,
+      <>Elige <b>Agregar al Dock…</b>.</>,
+      <>Confirma con <b>Agregar</b>. Maat aparecerá en tu Dock y Launchpad.</>,
+    ],
+    note: "Requiere macOS Sonoma (Safari 17) o posterior.",
+  },
+  "desktop-chromium": {
+    description: "Instala Maat en tu computadora desde la barra de direcciones.",
+    steps: [
+      <>Busca el ícono de <b>Instalar</b> al extremo derecho de la barra de direcciones (o abre el menú <b>⋮</b>).</>,
+      <>Elige <b>Instalar Maat</b> (o <b>Guardar y compartir → Instalar página como app</b>).</>,
+      <>Confirma. Maat se abrirá en su propia ventana como app de escritorio.</>,
+    ],
+    note: "¿Ya la instalaste? Búscala en tus aplicaciones o en el menú Inicio.",
+  },
 };
 
 /**
@@ -73,7 +91,7 @@ export function InstallApp({ className = "", label }: { className?: string; labe
         <button ref={button} type="button" className={`install-app ${className}`} onClick={choose}
           aria-haspopup={state === "prompt" ? undefined : "dialog"}>
           <Download aria-hidden="true" />
-          {label ?? (state === "prompt" || state.endsWith("inapp") ? "Instalar" : (
+          {label ?? (state === "prompt" || state.endsWith("inapp") || state.startsWith("desktop-") ? "Instalar app" : (
             // Very narrow headers have room only for the shorter word.
             <><span className="install-app-long">Agregar a inicio</span><span className="install-app-short">Instalar</span></>
           ))}

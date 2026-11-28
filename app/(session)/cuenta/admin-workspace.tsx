@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import { Brand } from "@/app/brand";
+import { InstallApp } from "@/components/pwa/install-app";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -384,6 +385,7 @@ export function AdminWorkspace({ user }: { user: AdminUser }) {
           <strong>{user.name}</strong>
           <span>Administrador · {user.email}</span>
         </div>
+        <InstallApp />
         <Button type="button" variant="outline" size="sm" onClick={() => setResetEmailTarget("")}>
           <KeyRound aria-hidden="true" /> <span>Código de acceso</span>
         </Button>
